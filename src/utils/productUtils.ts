@@ -5,21 +5,17 @@ export const sortProducts = (
   sortConfig: SortConfig
 ): Product[] => {
   return [...products].sort((a, b) => {
-    let aValue: any = a[sortConfig.field];
-    let bValue: any = b[sortConfig.field];
+    const directionMultiplier = sortConfig.direction === "asc" ? 1 : -1;
 
     if (sortConfig.field === "name") {
-      aValue = aValue.toLowerCase();
-      bValue = bValue.toLowerCase();
+      return a.name.localeCompare(b.name) * directionMultiplier;
     }
 
-    if (aValue < bValue) {
-      return sortConfig.direction === "asc" ? -1 : 1;
+    if (sortConfig.field === "price") {
+      return (a.price - b.price) * directionMultiplier;
     }
-    if (aValue > bValue) {
-      return sortConfig.direction === "asc" ? 1 : -1;
-    }
-    return 0;
+
+    return (Number(a.inStock) - Number(b.inStock)) * directionMultiplier;
   });
 };
 

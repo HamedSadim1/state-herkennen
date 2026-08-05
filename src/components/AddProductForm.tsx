@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback } from "react";
 import { Product } from "../types/product";
 import { generateId } from "../utils/formatters";
 
@@ -15,22 +15,15 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
   onUpdateProduct,
   onCancelEdit,
 }) => {
-  const [productName, setProductName] = useState<string>("");
-  const [price, setPrice] = useState<string>("");
-  const [inStock, setInStock] = useState<boolean>(false);
-
-  // Update form when editing product changes
-  useEffect(() => {
-    if (editingProduct) {
-      setProductName(editingProduct.name);
-      setPrice(editingProduct.price.toString());
-      setInStock(editingProduct.inStock);
-    } else {
-      setProductName("");
-      setPrice("");
-      setInStock(false);
-    }
-  }, [editingProduct]);
+  const [productName, setProductName] = useState<string>(
+    editingProduct?.name ?? ""
+  );
+  const [price, setPrice] = useState<string>(
+    editingProduct ? editingProduct.price.toString() : ""
+  );
+  const [inStock, setInStock] = useState<boolean>(
+    editingProduct?.inStock ?? false
+  );
 
   const handleSubmit = useCallback(
     (e: React.FormEvent) => {
