@@ -1,5 +1,5 @@
 import React from "react";
-import { SortConfig, SortField } from "../types/product";
+import { SortConfig, SortField } from "@/types/product";
 import { ArrowsUpDownIcon, ChevronUpIcon, ChevronDownIcon } from "./icons";
 
 interface SortIndicatorProps {

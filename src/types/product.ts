@@ -1,6 +1,6 @@
 // The category list and the `Category` type derived from it live in
 // config/constants (single source of truth); only the type is imported here.
-import type { Category } from "../config/constants";
+import type { Category } from "@/config/constants";
 
 export interface Product {
   id: string;

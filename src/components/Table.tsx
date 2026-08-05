@@ -1,10 +1,10 @@
 import React, { useCallback, useRef } from "react";
-import { Product } from "../types/product";
+import { Product } from "@/types/product";
 import AddProductForm from "./AddProductForm";
 import ProductTable from "./ProductTable";
 import SearchFilter from "./SearchFilter";
 import StatsDashboard from "./StatsDashboard";
-import { useInventory } from "../hooks/useInventory";
+import { useInventory } from "@/hooks/useInventory";
 import { ChartBarIcon, PlusIcon, MagnifyingGlassIcon, CubeIcon } from "./icons";
 
 interface TableProps {

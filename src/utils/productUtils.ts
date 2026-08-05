@@ -4,8 +4,8 @@ import {
   FilterConfig,
   StockStatus,
   StockFilterType,
-} from "../types/product";
-import { LOW_STOCK_THRESHOLD, STORAGE_KEY } from "../config/constants";
+} from "@/types/product";
+import { LOW_STOCK_THRESHOLD, STORAGE_KEY } from "@/config/constants";
 
 // --- Filter-state helpers (single source of truth for the panels) ---
 

@@ -1,17 +1,15 @@
 import React, { useState, useCallback } from "react";
-import { Product } from "../types/product";
+import { Product } from "@/types/product";
 import {
   CATEGORIES,
   CURRENCY_SYMBOL,
   DEFAULT_CATEGORY,
   PRICE_CENTS,
   type Category,
-} from "../config/constants";
-import { generateId } from "../utils/formatters";
-import {
-  validateProductInput,
-  ProductInputErrors,
-} from "../utils/productUtils";
+} from "@/config/constants";
+import { generateId } from "@/utils/formatters";
+import { cn } from "@/utils/cn";
+import { validateProductInput, ProductInputErrors } from "@/utils/productUtils";
 import { useToast } from "./toast-context";
 import FieldError from "./FieldError";
 import { PlusIcon } from "./icons";
@@ -151,7 +149,7 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
                 clearFieldError("name");
               }}
               placeholder="Enter product name"
-              className={`input ${fieldErrors.name ? "input-error" : ""}`}
+              className={cn("input", fieldErrors.name && "input-error")}
               aria-invalid={fieldErrors.name ? true : undefined}
               aria-describedby={
                 fieldErrors.name ? "productName-error" : undefined
@@ -193,7 +191,7 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
               placeholder="0.00"
               min="0"
               step="0.01"
-              className={`input ${fieldErrors.price ? "input-error" : ""}`}
+              className={cn("input", fieldErrors.price && "input-error")}
               aria-invalid={fieldErrors.price ? true : undefined}
               aria-describedby={fieldErrors.price ? "price-error" : undefined}
             />
@@ -215,7 +213,7 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
               placeholder="0"
               min="0"
               step="1"
-              className={`input ${fieldErrors.quantity ? "input-error" : ""}`}
+              className={cn("input", fieldErrors.quantity && "input-error")}
               aria-invalid={fieldErrors.quantity ? true : undefined}
               aria-describedby={
                 fieldErrors.quantity ? "quantity-error" : undefined

@@ -4,7 +4,8 @@ import { ConfirmContext, ConfirmOptions } from "./confirm-context";
 import {
   CONFIRM_DEFAULT_LABELS,
   DEFAULT_CONFIRM_VARIANT,
-} from "../config/constants";
+} from "@/config/constants";
+import { cn } from "@/utils/cn";
 
 // Fallback labels/variant come from the central constants file; per-call
 // options always win because they are spread last.
@@ -112,9 +113,10 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
       >
         <div className="flex items-start gap-4">
           <div
-            className={`w-11 h-11 rounded-full flex items-center justify-center shrink-0 ${
+            className={cn(
+              "w-11 h-11 rounded-full flex items-center justify-center shrink-0",
               isDanger ? "bg-red-100 text-red-600" : "bg-blue-100 text-blue-600"
-            }`}
+            )}
             aria-hidden="true"
           >
             {isDanger ? (
@@ -152,7 +154,10 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
             type="button"
             ref={confirmButtonRef}
             onClick={onConfirm}
-            className={`btn btn-md ${isDanger ? "btn-danger" : "btn-primary"}`}
+            className={cn(
+              "btn btn-md",
+              isDanger ? "btn-danger" : "btn-primary"
+            )}
           >
             {confirmLabel}
           </button>

@@ -11,7 +11,7 @@ import {
   SortConfig,
   FilterConfig,
   StockFilterType,
-} from "../types/product";
+} from "@/types/product";
 import {
   sortProducts,
   filterProducts,
@@ -20,14 +20,10 @@ import {
   LoadProductsResult,
   hasActiveFilters,
   getActiveStockFilter,
-} from "../utils/productUtils";
-import {
-  DEFAULT_FILTERS,
-  DEFAULT_SORT,
-  STORAGE_KEY,
-} from "../config/constants";
-import { generateId } from "../utils/formatters";
-import { useToast } from "../components/toast-context";
+} from "@/utils/productUtils";
+import { DEFAULT_FILTERS, DEFAULT_SORT, STORAGE_KEY } from "@/config/constants";
+import { generateId } from "@/utils/formatters";
+import { useToast } from "@/components/toast-context";
 
 interface DeletedEntry {
   product: Product;

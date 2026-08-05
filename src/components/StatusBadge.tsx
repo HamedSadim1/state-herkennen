@@ -1,6 +1,7 @@
 import React from "react";
-import { getStockStatus } from "../utils/productUtils";
-import { LOW_STOCK_THRESHOLD } from "../config/constants";
+import { getStockStatus } from "@/utils/productUtils";
+import { LOW_STOCK_THRESHOLD } from "@/config/constants";
+import { cn } from "@/utils/cn";
 
 interface StatusBadgeProps {
   quantity: number;
@@ -29,9 +30,9 @@ const StatusBadge: React.FC<StatusBadgeProps> = ({ quantity }) => {
   const style = STOCK_BADGE_STYLES[status];
 
   return (
-    <span className={`chip ${style.className}`}>
+    <span className={cn("chip", style.className)}>
       <span
-        className={`w-1.5 h-1.5 rounded-full ${style.dot}`}
+        className={cn("w-1.5 h-1.5 rounded-full", style.dot)}
         aria-hidden="true"
       />
       {style.label}

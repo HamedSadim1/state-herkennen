@@ -1,11 +1,8 @@
 import React, { useCallback } from "react";
-import { FilterConfig, StockFilterType } from "../types/product";
-import {
-  CATEGORIES,
-  DEFAULT_FILTERS,
-  type Category,
-} from "../config/constants";
-import { hasActiveFilters, hasAnyStockFilter } from "../utils/productUtils";
+import { FilterConfig, StockFilterType } from "@/types/product";
+import { CATEGORIES, DEFAULT_FILTERS, type Category } from "@/config/constants";
+import { hasActiveFilters, hasAnyStockFilter } from "@/utils/productUtils";
+import { cn } from "@/utils/cn";
 import { MagnifyingGlassIcon, XMarkIcon, ArrowPathIcon } from "./icons";
 
 interface SearchFilterProps {
@@ -61,7 +58,7 @@ const SearchFilter: React.FC<SearchFilterProps> = ({
   }, [onFilterChange]);
 
   const stockButtonClassName = (active: boolean, activeVariant: string) =>
-    `btn btn-md ${active ? activeVariant : "btn-ghost"}`;
+    cn("btn btn-md", active ? activeVariant : "btn-ghost");
 
   const activeFilterCount =
     (filterConfig.searchTerm !== "" ? 1 : 0) +

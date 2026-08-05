@@ -1,7 +1,8 @@
 import React, { useCallback } from "react";
-import { SortConfig, SortField } from "../types/product";
-import { getNextSortConfig } from "../utils/productUtils";
-import { SORT_FIELDS } from "../config/constants";
+import { SortConfig, SortField } from "@/types/product";
+import { getNextSortConfig } from "@/utils/productUtils";
+import { SORT_FIELDS } from "@/config/constants";
+import { cn } from "@/utils/cn";
 import SortIndicator from "./SortIndicator";
 import { ChevronUpIcon, ChevronDownIcon } from "./icons";
 
@@ -31,9 +32,10 @@ const SortControls: React.FC<SortControlsProps> = ({
             key={field}
             onClick={() => handleSortChange(field)}
             aria-pressed={sortConfig.field === field}
-            className={`btn btn-sm ${
+            className={cn(
+              "btn btn-sm",
               sortConfig.field === field ? "btn-primary" : "btn-ghost"
-            }`}
+            )}
           >
             {sortLabel}{" "}
             <span aria-hidden="true">

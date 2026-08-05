@@ -1,12 +1,13 @@
 import React, { useCallback } from "react";
-import { Product } from "../types/product";
+import { Product } from "@/types/product";
 import {
   FALLBACK_CATEGORY,
   LOW_STOCK_THRESHOLD,
   type Category,
-} from "../config/constants";
+} from "@/config/constants";
 import StatusBadge from "./StatusBadge";
-import { formatPrice } from "../utils/formatters";
+import { formatPrice } from "@/utils/formatters";
+import { cn } from "@/utils/cn";
 import { useConfirm } from "./confirm-context";
 import { useToast } from "./toast-context";
 import { PencilIcon, TrashIcon } from "./icons";
@@ -67,10 +68,11 @@ const ProductRow: React.FC<ProductRowProps> = ({
       </td>
       <td className="px-6 py-4 whitespace-nowrap text-sm">
         <span
-          className={`chip ${
+          className={cn(
+            "chip",
             CATEGORY_COLORS[product.category] ??
-            CATEGORY_COLORS[FALLBACK_CATEGORY]
-          }`}
+              CATEGORY_COLORS[FALLBACK_CATEGORY]
+          )}
         >
           {product.category}
         </span>

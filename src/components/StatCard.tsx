@@ -1,4 +1,5 @@
 import React from "react";
+import { cn } from "@/utils/cn";
 
 export interface StatCardProps {
   label: string;
@@ -35,25 +36,32 @@ const StatCard: React.FC<StatCardProps> = ({
   const content = (
     <>
       <div
-        className={`w-12 h-12 rounded-xl flex items-center justify-center ${iconBg}`}
+        className={cn(
+          "w-12 h-12 rounded-xl flex items-center justify-center",
+          iconBg
+        )}
         aria-hidden="true"
       >
         {icon}
       </div>
-      <div className={`min-w-0 ${alignEnd ? "sm:text-right" : ""}`}>
+      <div className={cn("min-w-0", alignEnd && "sm:text-right")}>
         <p className="text-xs font-medium uppercase tracking-wide text-gray-600">
           {label}
         </p>
-        <p className={`text-2xl font-bold tabular-nums ${accent} truncate`}>
+        <p
+          className={cn("text-2xl font-bold tabular-nums", accent, "truncate")}
+        >
           {value}
         </p>
       </div>
     </>
   );
 
-  const baseClass = `card p-5 flex items-center gap-4 transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 ${className} ${
-    alignEnd ? "sm:justify-between" : ""
-  }`;
+  const baseClass = cn(
+    "card p-5 flex items-center gap-4 transition-all duration-200 hover:shadow-md hover:-translate-y-0.5",
+    className,
+    alignEnd && "sm:justify-between"
+  );
 
   if (onClick) {
     return (
@@ -61,9 +69,11 @@ const StatCard: React.FC<StatCardProps> = ({
         type="button"
         onClick={onClick}
         aria-pressed={active}
-        className={`${baseClass} w-full text-left cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${
-          active ? `ring-2 ring-offset-2 ${activeRing}` : ""
-        }`}
+        className={cn(
+          baseClass,
+          "w-full text-left cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2",
+          active && ["ring-2 ring-offset-2", activeRing]
+        )}
       >
         {content}
       </button>

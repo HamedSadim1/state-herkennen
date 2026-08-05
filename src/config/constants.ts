@@ -1,4 +1,4 @@
-import type { FilterConfig, SortConfig, SortField } from "../types/product";
+import type { FilterConfig, SortConfig, SortField } from "@/types/product";
 
 // ============================================================================
 // Central constants file — every hardcoded value or magic number lives here so

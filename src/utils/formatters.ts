@@ -1,4 +1,4 @@
-import { PRICE_CURRENCY, PRICE_LOCALE } from "../config/constants";
+import { PRICE_CURRENCY, PRICE_LOCALE } from "@/config/constants";
 
 export const pluralize = (
   count: number,

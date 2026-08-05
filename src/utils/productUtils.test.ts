@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { Product } from "../types/product";
-import { DEFAULT_FILTERS } from "../config/constants";
+import { Product } from "@/types/product";
+import { DEFAULT_FILTERS } from "@/config/constants";
 import {
   filterProducts,
   getActiveStockFilter,

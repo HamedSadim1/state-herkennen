@@ -1,10 +1,10 @@
 import { useCallback, useRef, useState, type ChangeEvent } from "react";
-import { Product } from "../types/product";
-import { FALLBACK_CATEGORY } from "../config/constants";
-import { parseCsvToProducts } from "../utils/csv";
-import { pluralize } from "../utils/formatters";
-import { useConfirm } from "../components/confirm-context";
-import { useToast } from "../components/toast-context";
+import { Product } from "@/types/product";
+import { FALLBACK_CATEGORY } from "@/config/constants";
+import { parseCsvToProducts } from "@/utils/csv";
+import { pluralize } from "@/utils/formatters";
+import { useConfirm } from "@/components/confirm-context";
+import { useToast } from "@/components/toast-context";
 
 interface UseCsvImportOptions {
   /** Called with the parsed products after the user confirms the import. */

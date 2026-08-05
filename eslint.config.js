@@ -25,6 +25,20 @@ export default tseslint.config(
         "warn",
         { allowConstantExport: true },
       ],
+      // Enforce the "@/" path alias: relative parent imports ("../") are an
+      // error so every module is addressed through the src-root alias.
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["../**"],
+              message:
+                'Relative parent imports are not allowed; use the "@/" alias instead.',
+            },
+          ],
+        },
+      ],
     },
   }
 );

@@ -1,7 +1,7 @@
 import React, { useCallback } from "react";
-import { Product } from "../types/product";
-import { CSV_ACCEPT } from "../config/constants";
-import { useCsvImport } from "../hooks/useCsvImport";
+import { Product } from "@/types/product";
+import { CSV_ACCEPT } from "@/config/constants";
+import { useCsvImport } from "@/hooks/useCsvImport";
 import { useConfirm } from "./confirm-context";
 import { useToast } from "./toast-context";
 import {

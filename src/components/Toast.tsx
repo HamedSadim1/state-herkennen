@@ -5,7 +5,8 @@ import {
   TOAST_ACTION_DURATION,
   TOAST_DURATION,
   TOAST_EXIT_DURATION,
-} from "../config/constants";
+} from "@/config/constants";
+import { cn } from "@/utils/cn";
 
 interface ToastItem {
   id: number;
@@ -75,9 +76,11 @@ const ToastCard: React.FC<{
       onMouseLeave={() => setPaused(false)}
       onFocus={() => setPaused(true)}
       onBlur={() => setPaused(false)}
-      className={`pointer-events-auto flex items-start gap-3 rounded-xl border border-gray-100 border-l-4 bg-white p-4 shadow-lg shadow-gray-200/60 ${
-        style.accent
-      } ${exiting ? "animate-toast-out" : "animate-toast-in"}`}
+      className={cn(
+        "pointer-events-auto flex items-start gap-3 rounded-xl border border-gray-100 border-l-4 bg-white p-4 shadow-lg shadow-gray-200/60",
+        style.accent,
+        exiting ? "animate-toast-out" : "animate-toast-in"
+      )}
     >
       {style.icon}
       <p className="flex-1 text-sm font-medium text-gray-800 pt-0.5">

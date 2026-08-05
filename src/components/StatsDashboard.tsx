@@ -1,7 +1,7 @@
 import React, { useMemo } from "react";
-import { Product, StockFilterType } from "../types/product";
-import { getStockStatus } from "../utils/productUtils";
-import { formatPrice } from "../utils/formatters";
+import { Product, StockFilterType } from "@/types/product";
+import { getStockStatus } from "@/utils/productUtils";
+import { formatPrice } from "@/utils/formatters";
 import {
   CubeIcon,
   CheckCircleIcon,

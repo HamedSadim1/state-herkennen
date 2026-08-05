@@ -1,4 +1,4 @@
-import { Product } from "../types/product";
+import { Product } from "@/types/product";
 import {
   CATEGORIES,
   CSV_DOWNLOAD_FILENAME,
@@ -7,7 +7,7 @@ import {
   FALLBACK_CATEGORY,
   MAX_CSV_ROWS,
   type Category,
-} from "../config/constants";
+} from "@/config/constants";
 import { generateId } from "./formatters";
 
 export const escapeCsvCell = (value: string | number): string => {

@@ -1,13 +1,14 @@
 import React, { useCallback } from "react";
-import { Product, SortConfig, SortField } from "../types/product";
+import { Product, SortConfig, SortField } from "@/types/product";
 import ProductRow from "./ProductRow";
 import SortControls from "./SortControls";
 import TableToolbar from "./TableToolbar";
 import EmptyState from "./EmptyState";
-import { exportProductsToCsv } from "../utils/csv";
-import { getNextSortConfig } from "../utils/productUtils";
-import { SORT_FIELDS } from "../config/constants";
-import { pluralize } from "../utils/formatters";
+import { exportProductsToCsv } from "@/utils/csv";
+import { getNextSortConfig } from "@/utils/productUtils";
+import { SORT_FIELDS } from "@/config/constants";
+import { pluralize } from "@/utils/formatters";
+import { cn } from "@/utils/cn";
 import { useToast } from "./toast-context";
 import SortIndicator from "./SortIndicator";
 
@@ -109,9 +110,10 @@ const ProductTable: React.FC<ProductTableProps> = ({
                           : "descending"
                         : undefined
                     }
-                    className={`px-6 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider ${
+                    className={cn(
+                      "px-6 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider",
                       isRightAligned ? "text-right" : "text-left"
-                    }`}
+                    )}
                   >
                     {field ? (
                       <button
@@ -128,9 +130,10 @@ const ProductTable: React.FC<ProductTableProps> = ({
                               }`
                             : ""
                         }`}
-                        className={`inline-flex items-center gap-1.5 w-full whitespace-nowrap text-xs font-semibold uppercase tracking-wider text-gray-600 transition-colors hover:text-gray-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded ${
+                        className={cn(
+                          "inline-flex items-center gap-1.5 w-full whitespace-nowrap text-xs font-semibold uppercase tracking-wider text-gray-600 transition-colors hover:text-gray-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded",
                           isRightAligned ? "justify-end" : "justify-start"
-                        }`}
+                        )}
                       >
                         {label}
                         <span aria-hidden="true">
