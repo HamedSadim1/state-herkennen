@@ -1,17 +1,14 @@
+export type Category = "Smartphone" | "Tablet" | "Laptop" | "Audio" | "Accessories";
+
 export interface Product {
   id: string;
   name: string;
   price: number;
-  inStock: boolean;
+  quantity: number;
+  category: Category;
 }
 
-export interface ProductFormData {
-  name: string;
-  price: string;
-  inStock: boolean;
-}
-
-export type SortField = "name" | "price" | "inStock";
+export type SortField = "name" | "category" | "price" | "quantity";
 export type SortDirection = "asc" | "desc";
 
 export interface SortConfig {
@@ -21,6 +18,9 @@ export interface SortConfig {
 
 export interface FilterConfig {
   searchTerm: string;
+  category: Category | "all";
   showInStockOnly: boolean;
   showOutOfStockOnly: boolean;
 }
+
+export type StockStatus = "inStock" | "lowStock" | "outOfStock";

@@ -3,6 +3,7 @@ import { Product, SortConfig, FilterConfig } from "../types/product";
 import AddProductForm from "./AddProductForm";
 import ProductTable from "./ProductTable";
 import SearchFilter from "./SearchFilter";
+import StatsDashboard from "./StatsDashboard";
 import {
   sortProducts,
   filterProducts,
@@ -32,6 +33,7 @@ const Table: React.FC<TableProps> = ({ products: initialProducts }) => {
   });
   const [filterConfig, setFilterConfig] = useState<FilterConfig>({
     searchTerm: "",
+    category: "all",
     showInStockOnly: false,
     showOutOfStockOnly: false,
   });
@@ -64,6 +66,10 @@ const Table: React.FC<TableProps> = ({ products: initialProducts }) => {
     );
   }, []);
 
+  const handleImportProducts = useCallback((importedProducts: Product[]) => {
+    setProductList(importedProducts);
+  }, []);
+
   const handleCancelEdit = useCallback(() => {
     setEditingProduct(null);
   }, []);
@@ -81,7 +87,9 @@ const Table: React.FC<TableProps> = ({ products: initialProducts }) => {
   const sortedAndFilteredProducts = sortProducts(filteredProducts, sortConfig);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
+      <StatsDashboard products={productList} />
+
       <AddProductForm
         key={editingProduct?.id ?? "new-product"}
         onAddProduct={handleAddProduct}
@@ -101,6 +109,7 @@ const Table: React.FC<TableProps> = ({ products: initialProducts }) => {
         onSortChange={handleSortChange}
         onEditProduct={handleEditProduct}
         onDeleteProduct={handleDeleteProduct}
+        onImportProducts={handleImportProducts}
       />
     </div>
   );
