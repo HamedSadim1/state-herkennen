@@ -1,22 +1,17 @@
 import React, { useCallback } from "react";
-import { FilterConfig, Category } from "../types/product";
+import { FilterConfig, Category, StockFilterType } from "../types/product";
 import { CATEGORIES } from "../model/data";
+import {
+  DEFAULT_FILTERS,
+  hasActiveFilters,
+  hasAnyStockFilter,
+} from "../utils/productUtils";
 import { MagnifyingGlassIcon, XMarkIcon, ArrowPathIcon } from "./icons";
 
 interface SearchFilterProps {
   filterConfig: FilterConfig;
   onFilterChange: (config: FilterConfig) => void;
 }
-
-const DEFAULT_FILTERS: FilterConfig = {
-  searchTerm: "",
-  category: "all",
-  showInStockOnly: false,
-  showLowStockOnly: false,
-  showOutOfStockOnly: false,
-};
-
-type StockFilterType = "all" | "inStock" | "lowStock" | "outOfStock";
 
 const SearchFilter: React.FC<SearchFilterProps> = ({
   filterConfig,
@@ -50,7 +45,7 @@ const SearchFilter: React.FC<SearchFilterProps> = ({
   );
 
   const handleStockFilterChange = useCallback(
-    (filterType: StockFilterType) => {
+    (filterType: Exclude<StockFilterType, "all">) => {
       onFilterChange({
         ...filterConfig,
         showInStockOnly: filterType === "inStock",
@@ -68,27 +63,16 @@ const SearchFilter: React.FC<SearchFilterProps> = ({
   const stockButtonClassName = (active: boolean, activeVariant: string) =>
     `btn btn-md ${active ? activeVariant : "btn-ghost"}`;
 
-  const hasActiveFilters =
-    filterConfig.searchTerm !== "" ||
-    filterConfig.category !== "all" ||
-    filterConfig.showInStockOnly ||
-    filterConfig.showLowStockOnly ||
-    filterConfig.showOutOfStockOnly;
-
   const activeFilterCount =
     (filterConfig.searchTerm !== "" ? 1 : 0) +
     (filterConfig.category !== "all" ? 1 : 0) +
-    (filterConfig.showInStockOnly ||
-    filterConfig.showLowStockOnly ||
-    filterConfig.showOutOfStockOnly
-      ? 1
-      : 0);
+    (hasAnyStockFilter(filterConfig) ? 1 : 0);
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+    <div className="card p-6">
       <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
         <h2 className="text-lg font-bold text-gray-900">Search & Filter</h2>
-        {hasActiveFilters && (
+        {hasActiveFilters(filterConfig) && (
           <div className="flex items-center gap-2">
             <span className="chip chip-blue">
               {activeFilterCount}{" "}
@@ -153,20 +137,16 @@ const SearchFilter: React.FC<SearchFilterProps> = ({
         </div>
       </div>
 
-      <div className="mt-4">
-        <label className="field-label">Filter by Stock Status</label>
+      <fieldset className="mt-4">
+        <legend className="field-label">Filter by Stock Status</legend>
         <div className="flex flex-wrap gap-2">
+          {/* Matches the dashboard's "Total Products" card: clears every
+              filter (search, category and stock) in one action. */}
           <button
-            onClick={() => handleStockFilterChange("all")}
-            aria-pressed={
-              !filterConfig.showInStockOnly &&
-              !filterConfig.showLowStockOnly &&
-              !filterConfig.showOutOfStockOnly
-            }
+            onClick={() => onFilterChange(DEFAULT_FILTERS)}
+            aria-pressed={!hasActiveFilters(filterConfig)}
             className={stockButtonClassName(
-              !filterConfig.showInStockOnly &&
-                !filterConfig.showLowStockOnly &&
-                !filterConfig.showOutOfStockOnly,
+              !hasActiveFilters(filterConfig),
               "btn-neutral"
             )}
           >
@@ -203,7 +183,7 @@ const SearchFilter: React.FC<SearchFilterProps> = ({
             Out of Stock
           </button>
         </div>
-      </div>
+      </fieldset>
     </div>
   );
 };

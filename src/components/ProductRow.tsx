@@ -11,7 +11,7 @@ interface ProductRowProps {
   product: Product;
   onEdit: (product: Product) => void;
   onDelete: (productId: string) => void;
-  onUndoDelete: () => void;
+  onUndoDelete: (productId: string) => void;
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -46,7 +46,7 @@ const ProductRow: React.FC<ProductRowProps> = ({
       onDelete(product.id);
       notify("success", `"${product.name}" was deleted.`, {
         label: "Undo",
-        onClick: onUndoDelete,
+        onClick: () => onUndoDelete(product.id),
       });
     }
   }, [product, confirm, notify, onDelete, onUndoDelete]);

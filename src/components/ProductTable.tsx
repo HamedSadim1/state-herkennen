@@ -3,7 +3,8 @@ import { Product, SortConfig, SortField } from "../types/product";
 import ProductRow from "./ProductRow";
 import SortControls from "./SortControls";
 import { exportProductsToCsv, parseCsvToProducts } from "../utils/csv";
-import { getNextSortConfig } from "../utils/productUtils";
+import { getNextSortConfig, SORT_FIELDS } from "../utils/productUtils";
+import { pluralize } from "../utils/formatters";
 import { useConfirm } from "./confirm-context";
 import { useToast } from "./toast-context";
 import SortIndicator from "./SortIndicator";
@@ -16,10 +17,12 @@ import {
 } from "./icons";
 
 const HEADERS: { label: string; field?: SortField }[] = [
-  { label: "Product Name", field: "name" },
-  { label: "Category", field: "category" },
-  { label: "Price", field: "price" },
-  { label: "Quantity", field: "quantity" },
+  // Sortable columns come from the shared SORT_FIELDS config so the toolbar
+  // buttons and the table headers can never drift apart.
+  ...SORT_FIELDS.map(({ field, headerLabel }) => ({
+    label: headerLabel,
+    field,
+  })),
   { label: "Status" },
   { label: "Actions" },
 ];
@@ -36,7 +39,7 @@ interface ProductTableProps {
   onImportProducts: (products: Product[]) => void;
   onUndoImport: () => void;
   onResetData: () => void;
-  onUndoDelete: () => void;
+  onUndoDelete: (productId: string) => void;
 }
 
 const ProductTable: React.FC<ProductTableProps> = ({
@@ -101,17 +104,16 @@ const ProductTable: React.FC<ProductTableProps> = ({
             setImportError(null);
             notify(
               "success",
-              `${importedProducts.length} ${
-                importedProducts.length === 1 ? "product" : "products"
-              } imported.`,
+              `${importedProducts.length} ${pluralize(
+                importedProducts.length,
+                "product"
+              )} imported.`,
               { label: "Undo", onClick: onUndoImport }
             );
             if (warnings.length > 0) {
               notify(
                 "info",
-                `${warnings.length} ${
-                  warnings.length === 1 ? "row had" : "rows had"
-                } an unknown category and ${
+                `${pluralize(warnings.length, "row")} had an unknown category and ${
                   warnings.length === 1 ? "was" : "were"
                 } set to Accessories.`
               );
@@ -134,7 +136,7 @@ const ProductTable: React.FC<ProductTableProps> = ({
     },
     [onImportProducts, onUndoImport, confirm, notify, isImporting]
   );
-  const productNoun = totalProducts === 1 ? "product" : "products";
+  const productNoun = pluralize(totalProducts, "product");
 
   const shownLabel =
     products.length === totalProducts
@@ -142,7 +144,7 @@ const ProductTable: React.FC<ProductTableProps> = ({
       : `Showing ${products.length} of ${totalProducts} ${productNoun}`;
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-clip">
+    <div className="card overflow-clip">
       <div className="px-6 py-4 border-b border-gray-100">
         <div className="flex flex-wrap justify-between items-center gap-4">
           <div>

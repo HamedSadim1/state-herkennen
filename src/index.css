@@ -10,6 +10,13 @@
 }
 
 @layer components {
+  /* --- Surfaces --- */
+  /* Shared card surface; every panel uses the same base so styling changes
+     (radius, shadow, border) only need to happen here. */
+  .card {
+    @apply bg-white rounded-2xl shadow-sm border border-gray-100;
+  }
+
   /* --- Buttons --- */
   .btn {
     @apply inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium rounded-lg transition-all duration-200 active:scale-95 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2;
@@ -45,7 +52,7 @@
     @apply px-2.5 py-1 text-xs min-h-8;
   }
   .btn-sm {
-    @apply px-3 py-1.5 text-sm;
+    @apply px-3 py-1.5 text-sm min-h-9;
   }
   .btn-md {
     @apply px-4 py-2 text-sm;
@@ -171,6 +178,24 @@ html {
 body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* Print: only the inventory content matters — hide navigation, buttons, the
+   toast region and the modal, and strip shadows/backgrounds. */
+@media print {
+  nav,
+  .btn,
+  .fixed {
+    display: none !important;
+  }
+  .min-h-screen {
+    background: white !important;
+  }
+  .shadow-sm,
+  .shadow-lg,
+  .shadow-2xl {
+    box-shadow: none !important;
+  }
 }
 
 /* Respect the user's motion preferences (WCAG 2.3.3): disable smooth scrolling

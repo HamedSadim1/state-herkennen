@@ -37,18 +37,22 @@ const ToastCard: React.FC<{
   onClose: () => void;
 }> = ({ toast, onClose }) => {
   const [exiting, setExiting] = useState(false);
+  const [paused, setPaused] = useState(false);
   const exitTimerRef = useRef<number | null>(null);
 
   const duration = toast.action ? TOAST_ACTION_DURATION : TOAST_DURATION;
 
   // Auto-dismiss: start the exit animation just before the toast expires.
+  // Pausing (hover/focus) cancels the timer so actions like Undo aren't lost
+  // while the user is about to click them.
   useEffect(() => {
+    if (paused) return;
     const timer = window.setTimeout(
       () => setExiting(true),
       duration - EXIT_DURATION
     );
     return () => window.clearTimeout(timer);
-  }, [duration]);
+  }, [duration, paused]);
 
   // Wait for the exit animation before actually removing the toast.
   useEffect(() => {
@@ -67,6 +71,10 @@ const ToastCard: React.FC<{
   return (
     <div
       role={toast.type === "error" ? "alert" : "status"}
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+      onFocus={() => setPaused(true)}
+      onBlur={() => setPaused(false)}
       className={`pointer-events-auto flex items-start gap-3 rounded-xl border border-gray-100 border-l-4 bg-white p-4 shadow-lg shadow-gray-200/60 ${
         style.accent
       } ${exiting ? "animate-toast-out" : "animate-toast-in"}`}

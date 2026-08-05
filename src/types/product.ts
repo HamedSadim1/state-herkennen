@@ -26,3 +26,7 @@ export interface FilterConfig {
 }
 
 export type StockStatus = "inStock" | "lowStock" | "outOfStock";
+
+// Stock-scope for the dashboard shortcut cards and the filter panel; kept in
+// one place so both UIs can never drift apart.
+export type StockFilterType = "all" | "inStock" | "lowStock" | "outOfStock";

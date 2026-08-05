@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import { Product } from "../types/product";
+import { Product, StockFilterType } from "../types/product";
 import { getStockStatus } from "../utils/productUtils";
 import { formatPrice } from "../utils/formatters";
 import {
@@ -9,8 +9,6 @@ import {
   XCircleIcon,
   BanknotesIcon,
 } from "./icons";
-
-export type StockFilterType = "all" | "inStock" | "lowStock" | "outOfStock";
 
 interface StatsDashboardProps {
   products: Product[];
@@ -65,7 +63,7 @@ const StatCard: React.FC<StatCardProps> = ({
     </>
   );
 
-  const baseClass = `bg-white rounded-2xl shadow-sm border border-gray-100 p-5 flex items-center gap-4 transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 ${className} ${
+  const baseClass = `card p-5 flex items-center gap-4 transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 ${className} ${
     alignEnd ? "sm:justify-between" : ""
   }`;
 

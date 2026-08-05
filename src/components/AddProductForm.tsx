@@ -2,6 +2,7 @@ import React, { useState, useCallback } from "react";
 import { Product, Category } from "../types/product";
 import { generateId } from "../utils/formatters";
 import { CATEGORIES } from "../model/data";
+import { validateProductInput } from "../utils/productUtils";
 import { useToast } from "./toast-context";
 import { PlusIcon } from "./icons";
 
@@ -17,6 +18,18 @@ interface FieldErrors {
   price?: string;
   quantity?: string;
 }
+
+// Renders a per-field validation message, wired to the field via its error id
+// (referenced by the input's aria-describedby). Renders nothing when valid.
+const FieldError: React.FC<{ id: string; message?: string }> = ({
+  id,
+  message,
+}) =>
+  message ? (
+    <p id={id} className="field-error" role="alert">
+      {message}
+    </p>
+  ) : null;
 
 const AddProductForm: React.FC<AddProductFormProps> = ({
   onAddProduct,
@@ -61,31 +74,21 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
       if (isSubmitting) return;
 
       const trimmedName = productName.trim();
-      const parsedPrice = parseFloat(price);
-      // Number() instead of parseInt: parseInt silently truncates decimals
-      // (5.9 becomes 5), which would store wrong data without any feedback now
-      // that native validation is disabled via noValidate.
-      const parsedQuantity = Number(quantity);
 
-      const errors: FieldErrors = {};
-      if (!trimmedName) {
-        errors.name = "Product name is required.";
-      }
-      if (Number.isNaN(parsedPrice) || parsedPrice < 0) {
-        errors.price = "Enter a valid price of 0 or more.";
-      }
-      if (
-        Number.isNaN(parsedQuantity) ||
-        !Number.isInteger(parsedQuantity) ||
-        parsedQuantity < 0
-      ) {
-        errors.quantity = "Enter a whole quantity of 0 or more.";
-      }
+      const errors = validateProductInput({
+        name: productName,
+        price,
+        quantity,
+      });
       if (Object.keys(errors).length > 0) {
         setFieldErrors(errors);
         return;
       }
       setFieldErrors({});
+
+      // Round to cents so the stored value matches the displayed value.
+      const parsedPrice = Math.round(Number(price) * 100) / 100;
+      const parsedQuantity = Number(quantity);
 
       const productData: Product = {
         id: editingProduct?.id || generateId(),
@@ -132,7 +135,7 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
   }, [onCancelEdit, resetForm]);
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+    <div className="card p-6">
       <h2 className="text-2xl font-bold text-gray-900 mb-6">
         {editingProduct ? "Edit Product" : "Add New Product"}
       </h2>
@@ -158,13 +161,8 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
               aria-describedby={
                 fieldErrors.name ? "productName-error" : undefined
               }
-              required
             />
-            {fieldErrors.name && (
-              <p id="productName-error" className="field-error" role="alert">
-                {fieldErrors.name}
-              </p>
-            )}
+            <FieldError id="productName-error" message={fieldErrors.name} />
           </div>
 
           <div>
@@ -203,13 +201,8 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
               className={`input ${fieldErrors.price ? "input-error" : ""}`}
               aria-invalid={fieldErrors.price ? true : undefined}
               aria-describedby={fieldErrors.price ? "price-error" : undefined}
-              required
             />
-            {fieldErrors.price && (
-              <p id="price-error" className="field-error" role="alert">
-                {fieldErrors.price}
-              </p>
-            )}
+            <FieldError id="price-error" message={fieldErrors.price} />
           </div>
 
           <div>
@@ -232,13 +225,8 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
               aria-describedby={
                 fieldErrors.quantity ? "quantity-error" : undefined
               }
-              required
             />
-            {fieldErrors.quantity && (
-              <p id="quantity-error" className="field-error" role="alert">
-                {fieldErrors.quantity}
-              </p>
-            )}
+            <FieldError id="quantity-error" message={fieldErrors.quantity} />
           </div>
         </div>
 

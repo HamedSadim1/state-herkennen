@@ -1,5 +1,6 @@
 import { Product, Category } from "../types/product";
 import { generateId } from "./formatters";
+import { CATEGORIES } from "../model/data";
 
 const CSV_HEADERS = ["id", "name", "category", "price", "quantity"] as const;
 
@@ -7,12 +8,16 @@ const CSV_HEADERS = ["id", "name", "category", "price", "quantity"] as const;
 // the UI responsive (and the resulting DOM renderable) on very large files.
 const MAX_CSV_ROWS = 10000;
 
-const escapeCsvCell = (value: string | number): string => {
+export const escapeCsvCell = (value: string | number): string => {
   const stringValue = String(value);
-  if (/[",\n]/.test(stringValue)) {
-    return `"${stringValue.replace(/"/g, '""')}"`;
-  }
-  return stringValue;
+  const needsQuote = /[",\n]/.test(stringValue);
+  const escaped = stringValue.replace(/"/g, '""');
+  // Neutralize spreadsheet formula injection: cells starting with = + - @
+  // would be executed as formulas when the CSV is opened in Excel/Sheets.
+  // The apostrophe goes inside the quotes for quoted cells so parsers still
+  // see a single, well-formed field ("'=foo,bar" instead of '"=foo,bar").
+  const safeValue = /^[=+\-@]/.test(stringValue) ? `'${escaped}` : escaped;
+  return needsQuote ? `"${safeValue}"` : safeValue;
 };
 
 export const exportProductsToCsv = (products: Product[]): void => {
@@ -83,11 +88,17 @@ export const parseCsvToProducts = (csvText: string): ParseCsvResult => {
     throw new Error("The CSV file is empty.");
   }
 
-  // Skip the header row only when the first cell is actually one of our known
-  // headers (id/name) — a data row can't be mistaken for a header this way.
-  const firstCell = parseCsvRow(lines[0])[0]?.toLowerCase().trim() ?? "";
-  const dataLines =
-    firstCell === "id" || firstCell === "name" ? lines.slice(1) : lines;
+  // Skip the header row when the first line looks like a header: at least two
+  // cells match a known column name. A plain data row can't satisfy this,
+  // which also covers CSVs whose header doesn't start with id/name.
+  const HEADER_CELLS = new Set(["id", "name", "category", "price", "quantity"]);
+  const firstRowCells = parseCsvRow(lines[0]).map((cell) =>
+    cell.toLowerCase().trim()
+  );
+  const headerMatchCount = firstRowCells.filter((cell) =>
+    HEADER_CELLS.has(cell)
+  ).length;
+  const dataLines = headerMatchCount >= 2 ? lines.slice(1) : lines;
 
   if (dataLines.length > MAX_CSV_ROWS) {
     throw new Error(
@@ -96,21 +107,19 @@ export const parseCsvToProducts = (csvText: string): ParseCsvResult => {
   }
 
   const warnings: string[] = [];
-  const validCategories: Category[] = [
-    "Smartphone",
-    "Tablet",
-    "Laptop",
-    "Audio",
-    "Accessories",
-  ];
 
   const products: Product[] = dataLines.map((line, index) => {
     const cells = parseCsvRow(line);
 
-    // The id column is ignored: ids from an edited/duplicated CSV could collide,
-    // which would break React keys and storage lookups. Fresh ids guarantee
-    // uniqueness for every imported row.
-    const [, name, category, price, quantity] = cells;
+    // Ids from an edited/duplicated CSV could collide, which would break React
+    // keys and storage lookups, so every imported row gets a fresh id and the
+    // id column (if present) is ignored. Foreign CSVs without an id column
+    // shift the data cells one position left.
+    const hasIdColumn = cells.length >= 5;
+    const name = hasIdColumn ? cells[1] : cells[0];
+    const category = hasIdColumn ? cells[2] : cells[1];
+    const price = hasIdColumn ? cells[3] : cells[2];
+    const quantity = hasIdColumn ? cells[4] : cells[3];
 
     if (!name) {
       throw new Error(`Invalid row on line ${index + 1}: name is missing.`);
@@ -130,7 +139,7 @@ export const parseCsvToProducts = (csvText: string): ParseCsvResult => {
       );
     }
 
-    const isKnownCategory = validCategories.includes(category as Category);
+    const isKnownCategory = CATEGORIES.includes(category as Category);
     if (!isKnownCategory) {
       warnings.push(
         `Row ${index + 1} ("${name}"): unknown category "${category || "—"}" — set to Accessories.`

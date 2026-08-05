@@ -1,11 +1,55 @@
 import {
   Product,
   SortConfig,
+  SortField,
   FilterConfig,
   StockStatus,
+  StockFilterType,
 } from "../types/product";
 
 export const LOW_STOCK_THRESHOLD = 5;
+
+// Single source of truth for the "no filters applied" state; shared by the
+// inventory state and the filter panel so they can never drift apart.
+export const DEFAULT_FILTERS: FilterConfig = {
+  searchTerm: "",
+  category: "all",
+  showInStockOnly: false,
+  showLowStockOnly: false,
+  showOutOfStockOnly: false,
+};
+
+// --- Filter-state helpers (single source of truth for the panels) ---
+
+export const hasAnyStockFilter = (config: FilterConfig): boolean =>
+  config.showInStockOnly ||
+  config.showLowStockOnly ||
+  config.showOutOfStockOnly;
+
+export const hasActiveFilters = (config: FilterConfig): boolean =>
+  config.searchTerm !== "" ||
+  config.category !== "all" ||
+  hasAnyStockFilter(config);
+
+export const getActiveStockFilter = (config: FilterConfig): StockFilterType => {
+  if (config.showLowStockOnly) return "lowStock";
+  if (config.showInStockOnly) return "inStock";
+  if (config.showOutOfStockOnly) return "outOfStock";
+  return "all";
+};
+
+// The sortable columns, shared by the toolbar buttons and the table headers
+// so both stay in sync.
+export const SORT_FIELDS: {
+  field: SortField;
+  sortLabel: string;
+  headerLabel: string;
+}[] = [
+  { field: "name", sortLabel: "Name", headerLabel: "Product Name" },
+  { field: "category", sortLabel: "Category", headerLabel: "Category" },
+  { field: "price", sortLabel: "Price", headerLabel: "Price" },
+  { field: "quantity", sortLabel: "Quantity", headerLabel: "Quantity" },
+];
 
 export const getStockStatus = (quantity: number): StockStatus => {
   if (quantity <= 0) return "outOfStock";
@@ -62,10 +106,7 @@ export const filterProducts = (
     // Stock filters mirror the dashboard semantics exactly (see getStockStatus),
     // so "In Stock" means truly in stock and low-stock products can be filtered
     // on their own instead of being lumped in with in-stock items.
-    const noStockFilter =
-      !filterConfig.showInStockOnly &&
-      !filterConfig.showLowStockOnly &&
-      !filterConfig.showOutOfStockOnly;
+    const noStockFilter = !hasAnyStockFilter(filterConfig);
     const stockStatus = getStockStatus(product.quantity);
     const matchesStockFilter =
       noStockFilter ||
@@ -75,6 +116,37 @@ export const filterProducts = (
 
     return matchesSearch && matchesCategory && matchesStockFilter;
   });
+};
+
+// Validates the raw form field strings and returns per-field error messages.
+// An empty object means the input is valid. Kept as a pure function so the
+// form logic is testable without rendering.
+export const validateProductInput = (input: {
+  name: string;
+  price: string;
+  quantity: string;
+}): { name?: string; price?: string; quantity?: string } => {
+  const errors: { name?: string; price?: string; quantity?: string } = {};
+
+  if (input.name.trim() === "") {
+    errors.name = "Product name is required.";
+  }
+
+  // Empty string must be rejected explicitly: Number("") === 0 would
+  // otherwise silently accept a blank price.
+  const trimmedPrice = input.price.trim();
+  const parsedPrice = Number(trimmedPrice);
+  if (trimmedPrice === "" || Number.isNaN(parsedPrice) || parsedPrice < 0) {
+    errors.price = "Enter a valid price of 0 or more.";
+  }
+
+  // Strict digits-only check: Number() silently accepts "", decimals (5.5),
+  // hex (0x10) and scientific notation (1e2), which would store wrong data.
+  if (!/^\d+$/.test(input.quantity.trim())) {
+    errors.quantity = "Enter a whole quantity of 0 or more.";
+  }
+
+  return errors;
 };
 
 // Returns false when the write failed (e.g. storage quota exceeded) so the UI
@@ -89,31 +161,42 @@ export const saveProductsToStorage = (products: Product[]): boolean => {
   }
 };
 
-export const loadProductsFromStorage = (): Product[] => {
+// Minimal per-item shape check used to filter out corrupt rows instead of
+// discarding the user's whole stored inventory.
+const isValidProduct = (product: unknown): product is Product => {
+  return (
+    product !== null &&
+    typeof product === "object" &&
+    typeof (product as Product).name === "string" &&
+    (product as Product).name.trim().length > 0 &&
+    typeof (product as Product).price === "number" &&
+    typeof (product as Product).quantity === "number" &&
+    typeof (product as Product).category === "string"
+  );
+};
+
+export interface LoadProductsResult {
+  products: Product[];
+  /** True when stored data was unreadable or contained invalid rows. */
+  hadCorruptData: boolean;
+}
+
+export const loadProductsFromStorage = (): LoadProductsResult => {
   try {
     const stored = localStorage.getItem("products");
-    if (!stored) return [];
+    if (!stored) return { products: [], hadCorruptData: false };
 
     const parsed: unknown = JSON.parse(stored);
-    if (!Array.isArray(parsed)) return [];
+    if (!Array.isArray(parsed)) {
+      return { products: [], hadCorruptData: true };
+    }
 
-    // Validate the stored data matches the current Product shape. If it was
-    // saved by an older version of the app or corrupted, fall back to the seed
-    // data instead of rendering broken values (empty names, "$NaN" prices).
-    const isValidShape = parsed.every(
-      (product) =>
-        product !== null &&
-        typeof product === "object" &&
-        typeof (product as Product).name === "string" &&
-        (product as Product).name.trim().length > 0 &&
-        typeof (product as Product).price === "number" &&
-        typeof (product as Product).quantity === "number" &&
-        typeof (product as Product).category === "string"
-    );
-
-    return isValidShape ? (parsed as Product[]) : [];
+    // Keep the valid rows and drop the rest: one corrupt entry shouldn't wipe
+    // the entire inventory. The flag lets the UI warn about what happened.
+    const products = parsed.filter(isValidProduct);
+    return { products, hadCorruptData: products.length !== parsed.length };
   } catch (error) {
     console.error("Failed to load products from localStorage:", error);
-    return [];
+    return { products: [], hadCorruptData: true };
   }
 };
