@@ -1,25 +1,34 @@
-import { Product, SortConfig, FilterConfig } from "../types/product";
+import { Product, SortConfig, FilterConfig, StockStatus } from "../types/product";
+
+export const LOW_STOCK_THRESHOLD = 5;
+
+export const getStockStatus = (quantity: number): StockStatus => {
+  if (quantity <= 0) return "outOfStock";
+  if (quantity <= LOW_STOCK_THRESHOLD) return "lowStock";
+  return "inStock";
+};
+
+export const isInStock = (product: Product): boolean => product.quantity > 0;
 
 export const sortProducts = (
   products: Product[],
   sortConfig: SortConfig
 ): Product[] => {
   return [...products].sort((a, b) => {
-    let aValue: any = a[sortConfig.field];
-    let bValue: any = b[sortConfig.field];
+    const directionMultiplier = sortConfig.direction === "asc" ? 1 : -1;
 
-    if (sortConfig.field === "name") {
-      aValue = aValue.toLowerCase();
-      bValue = bValue.toLowerCase();
+    switch (sortConfig.field) {
+      case "name":
+        return a.name.localeCompare(b.name) * directionMultiplier;
+      case "category":
+        return a.category.localeCompare(b.category) * directionMultiplier;
+      case "price":
+        return (a.price - b.price) * directionMultiplier;
+      case "quantity":
+        return (a.quantity - b.quantity) * directionMultiplier;
+      default:
+        return 0;
     }
-
-    if (aValue < bValue) {
-      return sortConfig.direction === "asc" ? -1 : 1;
-    }
-    if (aValue > bValue) {
-      return sortConfig.direction === "asc" ? 1 : -1;
-    }
-    return 0;
   });
 };
 
@@ -31,12 +40,17 @@ export const filterProducts = (
     const matchesSearch = product.name
       .toLowerCase()
       .includes(filterConfig.searchTerm.toLowerCase());
+
+    const matchesCategory =
+      filterConfig.category === "all" ||
+      product.category === filterConfig.category;
+
     const matchesStockFilter =
       (!filterConfig.showInStockOnly && !filterConfig.showOutOfStockOnly) ||
-      (filterConfig.showInStockOnly && product.inStock) ||
-      (filterConfig.showOutOfStockOnly && !product.inStock);
+      (filterConfig.showInStockOnly && isInStock(product)) ||
+      (filterConfig.showOutOfStockOnly && !isInStock(product));
 
-    return matchesSearch && matchesStockFilter;
+    return matchesSearch && matchesCategory && matchesStockFilter;
   });
 };
 
@@ -51,7 +65,23 @@ export const saveProductsToStorage = (products: Product[]): void => {
 export const loadProductsFromStorage = (): Product[] => {
   try {
     const stored = localStorage.getItem("products");
-    return stored ? JSON.parse(stored) : [];
+    if (!stored) return [];
+
+    const parsed: unknown = JSON.parse(stored);
+    if (!Array.isArray(parsed)) return [];
+
+    // Validate the stored data matches the current Product shape. If it was
+    // saved by an older version of the app (e.g. no quantity/category), fall
+    // back to the seed data instead of rendering broken values.
+    const isValidShape = parsed.every(
+      (product) =>
+        product !== null &&
+        typeof product === "object" &&
+        typeof (product as Product).quantity === "number" &&
+        typeof (product as Product).category === "string"
+    );
+
+    return isValidShape ? (parsed as Product[]) : [];
   } catch (error) {
     console.error("Failed to load products from localStorage:", error);
     return [];

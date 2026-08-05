@@ -6,6 +6,13 @@ interface SortControlsProps {
   onSortChange: (config: SortConfig) => void;
 }
 
+const SORT_FIELDS: { field: SortField; label: string }[] = [
+  { field: "name", label: "Name" },
+  { field: "category", label: "Category" },
+  { field: "price", label: "Price" },
+  { field: "quantity", label: "Quantity" },
+];
+
 const SortControls: React.FC<SortControlsProps> = ({
   sortConfig,
   onSortChange,
@@ -26,43 +33,26 @@ const SortControls: React.FC<SortControlsProps> = ({
   );
 
   const getSortIcon = (field: SortField) => {
-    if (sortConfig.field !== field) return "↕️";
+    if (sortConfig.field !== field) return "↕";
     return sortConfig.direction === "asc" ? "↑" : "↓";
   };
 
   return (
-    <div className="flex items-center space-x-2 mb-4">
-      <span className="text-sm font-medium text-gray-700">Sort by:</span>
-      <button
-        onClick={() => handleSortChange("name")}
-        className={`px-3 py-1 rounded-md text-sm font-medium transition-colors duration-200 ${
-          sortConfig.field === "name"
-            ? "bg-blue-600 text-white"
-            : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-        }`}
-      >
-        Name {getSortIcon("name")}
-      </button>
-      <button
-        onClick={() => handleSortChange("price")}
-        className={`px-3 py-1 rounded-md text-sm font-medium transition-colors duration-200 ${
-          sortConfig.field === "price"
-            ? "bg-blue-600 text-white"
-            : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-        }`}
-      >
-        Price {getSortIcon("price")}
-      </button>
-      <button
-        onClick={() => handleSortChange("inStock")}
-        className={`px-3 py-1 rounded-md text-sm font-medium transition-colors duration-200 ${
-          sortConfig.field === "inStock"
-            ? "bg-blue-600 text-white"
-            : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-        }`}
-      >
-        Status {getSortIcon("inStock")}
-      </button>
+    <div className="flex items-center flex-wrap gap-2">
+      <span className="text-sm font-medium text-gray-500">Sort by:</span>
+      {SORT_FIELDS.map(({ field, label }) => (
+        <button
+          key={field}
+          onClick={() => handleSortChange(field)}
+          className={`px-3 py-1 rounded-lg text-sm font-medium transition-all duration-200 active:scale-95 ${
+            sortConfig.field === field
+              ? "bg-blue-600 text-white shadow-sm"
+              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+          }`}
+        >
+          {label} <span aria-hidden="true">{getSortIcon(field)}</span>
+        </button>
+      ))}
     </div>
   );
 };
