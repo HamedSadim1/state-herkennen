@@ -94,9 +94,6 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
     resetForm();
   }, [onCancelEdit, resetForm]);
 
-  const inputClassName =
-    "w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-shadow duration-200";
-
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
       <h2 className="text-2xl font-bold text-gray-900 mb-6">
@@ -105,10 +102,7 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="md:col-span-2">
-            <label
-              htmlFor="productName"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
+            <label htmlFor="productName" className="field-label">
               Product Name
             </label>
             <input
@@ -117,23 +111,20 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
               value={productName}
               onChange={(e) => setProductName(e.target.value)}
               placeholder="Enter product name"
-              className={inputClassName}
+              className="input"
               required
             />
           </div>
 
           <div>
-            <label
-              htmlFor="category"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
+            <label htmlFor="product-category" className="field-label">
               Category
             </label>
             <select
-              id="category"
+              id="product-category"
               value={category}
               onChange={(e) => setCategory(e.target.value as Category)}
-              className={inputClassName}
+              className="input"
             >
               {CATEGORIES.map((cat) => (
                 <option key={cat} value={cat}>
@@ -145,10 +136,7 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label
-                htmlFor="price"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
+              <label htmlFor="price" className="field-label">
                 Price ($)
               </label>
               <input
@@ -159,15 +147,12 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
                 placeholder="0.00"
                 min="0"
                 step="0.01"
-                className={inputClassName}
+                className="input"
                 required
               />
             </div>
             <div>
-              <label
-                htmlFor="quantity"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
+              <label htmlFor="quantity" className="field-label">
                 Quantity
               </label>
               <input
@@ -178,7 +163,7 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
                 placeholder="0"
                 min="0"
                 step="1"
-                className={inputClassName}
+                className="input"
                 required
               />
             </div>
@@ -186,19 +171,13 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
         </div>
 
         {error && (
-          <p
-            className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2"
-            role="alert"
-          >
+          <p className="alert-error" role="alert">
             {error}
           </p>
         )}
 
         <div className="flex space-x-3">
-          <button
-            type="submit"
-            className="px-6 py-2.5 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 hover:shadow-md active:scale-95"
-          >
+          <button type="submit" className="btn btn-primary btn-lg">
             {editingProduct ? "Update Product" : "Add Product"}
           </button>
 
@@ -206,7 +185,7 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
             <button
               type="button"
               onClick={handleCancel}
-              className="px-6 py-2.5 bg-gray-600 text-white font-medium rounded-lg hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-all duration-200 active:scale-95"
+              className="btn btn-secondary btn-lg"
             >
               Cancel
             </button>

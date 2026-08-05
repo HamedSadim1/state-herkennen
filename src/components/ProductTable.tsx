@@ -1,8 +1,17 @@
 import React, { useRef, useCallback, useState } from "react";
-import { Product, SortConfig } from "../types/product";
+import { Product, SortConfig, SortField } from "../types/product";
 import ProductRow from "./ProductRow";
 import SortControls from "./SortControls";
 import { exportProductsToCsv, parseCsvToProducts } from "../utils/csv";
+
+const HEADERS: { label: string; field?: SortField }[] = [
+  { label: "Product Name", field: "name" },
+  { label: "Category", field: "category" },
+  { label: "Price", field: "price" },
+  { label: "Quantity", field: "quantity" },
+  { label: "Status" },
+  { label: "Actions" },
+];
 
 interface ProductTableProps {
   products: Product[];
@@ -69,20 +78,18 @@ const ProductTable: React.FC<ProductTableProps> = ({
               Product Inventory
             </h2>
             <p className="text-sm text-gray-500 mt-0.5">
-              {products.length} {products.length === 1 ? "product" : "products"} shown
+              {products.length} {products.length === 1 ? "product" : "products"}{" "}
+              shown
             </p>
           </div>
           <div className="flex items-center gap-3">
             <SortControls sortConfig={sortConfig} onSortChange={onSortChange} />
-            <button
-              onClick={handleExport}
-              className="px-3 py-1.5 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors duration-150"
-            >
+            <button onClick={handleExport} className="btn btn-sm btn-ghost">
               ⬇️ Export CSV
             </button>
             <button
               onClick={() => fileInputRef.current?.click()}
-              className="px-3 py-1.5 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors duration-150"
+              className="btn btn-sm btn-ghost"
             >
               ⬆️ Import CSV
             </button>
@@ -100,7 +107,7 @@ const ProductTable: React.FC<ProductTableProps> = ({
           </div>
         </div>
         {importError && (
-          <p className="mt-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2" role="alert">
+          <p className="alert-error mt-3" role="alert">
             {importError}
           </p>
         )}
@@ -110,23 +117,30 @@ const ProductTable: React.FC<ProductTableProps> = ({
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              {[
-                "Product Name",
-                "Category",
-                "Price",
-                "Quantity",
-                "Status",
-                "Actions",
-              ].map((header) => (
-                <th
-                  key={header}
-                  className={`px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider ${
-                    header === "Actions" ? "text-right" : ""
-                  }`}
-                >
-                  {header}
-                </th>
-              ))}
+              {HEADERS.map(({ label, field }) => {
+                const isSorted = field != null && sortConfig.field === field;
+                return (
+                  <th
+                    key={label}
+                    aria-sort={
+                      isSorted
+                        ? sortConfig.direction === "asc"
+                          ? "ascending"
+                          : "descending"
+                        : undefined
+                    }
+                    className={`px-6 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider ${
+                      label === "Actions" ||
+                      field === "price" ||
+                      field === "quantity"
+                        ? "text-right"
+                        : "text-left"
+                    }`}
+                  >
+                    {label}
+                  </th>
+                );
+              })}
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-100">
@@ -147,8 +161,10 @@ const ProductTable: React.FC<ProductTableProps> = ({
           <div className="text-4xl mb-3" aria-hidden="true">
             🔍
           </div>
-          <p className="text-gray-600 text-lg font-medium">No products found.</p>
-          <p className="text-gray-400 text-sm mt-1">
+          <p className="text-gray-600 text-lg font-medium">
+            No products found.
+          </p>
+          <p className="text-gray-500 text-sm mt-1">
             Try adjusting your search, category or filter criteria.
           </p>
         </div>

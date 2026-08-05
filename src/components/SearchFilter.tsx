@@ -42,25 +42,16 @@ const SearchFilter: React.FC<SearchFilterProps> = ({
     [filterConfig, onFilterChange]
   );
 
-  const stockButtonClassName = (active: boolean, activeColor: string) =>
-    `px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 active:scale-95 ${
-      active
-        ? `${activeColor} text-white shadow-sm`
-        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-    }`;
+  const stockButtonClassName = (active: boolean, activeVariant: string) =>
+    `btn btn-md ${active ? activeVariant : "btn-ghost"}`;
 
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-      <h3 className="text-lg font-bold text-gray-900 mb-4">
-        Search & Filter
-      </h3>
+      <h3 className="text-lg font-bold text-gray-900 mb-4">Search & Filter</h3>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label
-            htmlFor="search"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
+          <label htmlFor="search" className="field-label">
             Search Products
           </label>
           <input
@@ -69,22 +60,19 @@ const SearchFilter: React.FC<SearchFilterProps> = ({
             value={filterConfig.searchTerm}
             onChange={handleSearchChange}
             placeholder="Search by product name..."
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-shadow duration-200"
+            className="input"
           />
         </div>
 
         <div>
-          <label
-            htmlFor="category"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
+          <label htmlFor="filter-category" className="field-label">
             Category
           </label>
           <select
-            id="category"
+            id="filter-category"
             value={filterConfig.category}
             onChange={handleCategoryChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-shadow duration-200"
+            className="input"
           >
             <option value="all">All Categories</option>
             {CATEGORIES.map((cat) => (
@@ -97,33 +85,36 @@ const SearchFilter: React.FC<SearchFilterProps> = ({
       </div>
 
       <div className="mt-4">
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Filter by Stock Status
-        </label>
+        <label className="field-label">Filter by Stock Status</label>
         <div className="flex flex-wrap gap-2">
           <button
             onClick={() => handleStockFilterChange("all")}
+            aria-pressed={
+              !filterConfig.showInStockOnly && !filterConfig.showOutOfStockOnly
+            }
             className={stockButtonClassName(
               !filterConfig.showInStockOnly && !filterConfig.showOutOfStockOnly,
-              "bg-gray-800"
+              "btn-neutral"
             )}
           >
             All Products
           </button>
           <button
             onClick={() => handleStockFilterChange("inStock")}
+            aria-pressed={filterConfig.showInStockOnly}
             className={stockButtonClassName(
               filterConfig.showInStockOnly,
-              "bg-emerald-600"
+              "btn-success"
             )}
           >
             In Stock
           </button>
           <button
             onClick={() => handleStockFilterChange("outOfStock")}
+            aria-pressed={filterConfig.showOutOfStockOnly}
             className={stockButtonClassName(
               filterConfig.showOutOfStockOnly,
-              "bg-red-600"
+              "btn-danger"
             )}
           >
             Out of Stock

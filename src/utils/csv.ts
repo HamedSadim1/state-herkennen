@@ -71,7 +71,7 @@ export const parseCsvToProducts = (csvText: string): Product[] => {
     .filter((line) => line.length > 0);
 
   if (lines.length === 0) {
-    throw new Error("Het CSV-bestand is leeg.");
+    throw new Error("The CSV file is empty.");
   }
 
   // Skip header row if it matches our known headers
@@ -85,7 +85,7 @@ export const parseCsvToProducts = (csvText: string): Product[] => {
     const [id, name, category, price, quantity] = cells;
 
     if (!name) {
-      throw new Error(`Ongeldige rij op regel ${index + 1}: naam ontbreekt.`);
+      throw new Error(`Invalid row on line ${index + 1}: name is missing.`);
     }
 
     const parsedPrice = Number(price);
@@ -93,12 +93,12 @@ export const parseCsvToProducts = (csvText: string): Product[] => {
 
     if (Number.isNaN(parsedPrice) || parsedPrice < 0) {
       throw new Error(
-        `Ongeldige rij op regel ${index + 1}: prijs moet een getal van 0 of meer zijn.`
+        `Invalid row on line ${index + 1}: price must be a number of 0 or more.`
       );
     }
     if (Number.isNaN(parsedQuantity) || parsedQuantity < 0) {
       throw new Error(
-        `Ongeldige rij op regel ${index + 1}: voorraad moet een getal van 0 of meer zijn.`
+        `Invalid row on line ${index + 1}: quantity must be a number of 0 or more.`
       );
     }
 

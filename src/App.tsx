@@ -21,7 +21,7 @@ function App() {
         <main>
           <Table products={data} />
         </main>
-        <footer className="mt-12 pb-4 text-center text-sm text-gray-400">
+        <footer className="mt-12 pb-4 text-center text-sm text-gray-500">
           Built with React, TypeScript & Tailwind CSS
         </footer>
       </div>

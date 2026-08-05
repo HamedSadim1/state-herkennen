@@ -44,13 +44,18 @@ const SortControls: React.FC<SortControlsProps> = ({
         <button
           key={field}
           onClick={() => handleSortChange(field)}
-          className={`px-3 py-1 rounded-lg text-sm font-medium transition-all duration-200 active:scale-95 ${
-            sortConfig.field === field
-              ? "bg-blue-600 text-white shadow-sm"
-              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+          aria-pressed={sortConfig.field === field}
+          className={`btn btn-sm ${
+            sortConfig.field === field ? "btn-primary" : "btn-ghost"
           }`}
         >
           {label} <span aria-hidden="true">{getSortIcon(field)}</span>
+          {sortConfig.field === field && (
+            <span className="sr-only">
+              currently{" "}
+              {sortConfig.direction === "asc" ? "ascending" : "descending"}
+            </span>
+          )}
         </button>
       ))}
     </div>
