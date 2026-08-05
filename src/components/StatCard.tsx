@@ -58,7 +58,9 @@ const StatCard: React.FC<StatCardProps> = ({
   );
 
   const baseClass = cn(
-    "card p-5 flex items-center gap-4 transition-all duration-200 hover:shadow-md hover:-translate-y-0.5",
+    // transition-transform only: the hover shadow snaps instead of animating,
+    // so no dark line flickers at the card edge on hover.
+    "card p-5 flex items-center gap-4 transition-transform duration-200 hover:shadow-md hover:-translate-y-0.5",
     className,
     alignEnd && "sm:justify-between"
   );

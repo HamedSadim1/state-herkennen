@@ -19,10 +19,12 @@
 
   /* --- Buttons --- */
   .btn {
-    /* will-change-transform: the active:scale-95 press animates on its own
-       composited layer, so Chrome no longer repaints neighboring borders/
-       shadows each frame (previously a 1px line flickered when sorting). */
-    @apply inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium rounded-lg transition-all duration-200 active:scale-95 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 will-change-transform;
+    /* box-shadow is deliberately NOT transitioned: animating shadow-sm/md
+       repaints the dark shadow line under the button each frame, which made a
+       black line flicker above the table header when swapping the active sort
+       button. Shadows now snap; colors/background animate smoothly and the
+       press scale runs on its own composited layer (will-change-transform). */
+    @apply inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium rounded-lg transition-[color,background-color,border-color,transform] duration-200 active:scale-95 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 will-change-transform;
   }
   .btn-primary {
     @apply bg-blue-600 text-white hover:bg-blue-700 hover:shadow-md shadow-sm focus-visible:ring-blue-500;

@@ -90,7 +90,12 @@ const ProductTable: React.FC<ProductTableProps> = ({
       />
 
       <div className="overflow-x-auto overflow-y-clip">
-        <table className="min-w-full divide-y divide-gray-200">
+        {/* border-separate overrides Tailwind's border-collapse: collapse, which
+            makes Chrome paint a stray 1px black line on a random row whenever
+            the rows are reordered (sorting) — the artifact moves between rows
+            on every sort. Separate borders render independently, so no shared
+            collapsed border can glitch. */}
+        <table className="min-w-full divide-y divide-gray-200 border-separate border-spacing-0">
           <thead className="bg-gray-50 sticky top-0 z-10">
             <tr>
               {HEADERS.map(({ label, field }) => {
