@@ -3,6 +3,9 @@ import { Product } from "../types/product";
 import StatusBadge from "./StatusBadge";
 import { formatPrice } from "../utils/formatters";
 import { LOW_STOCK_THRESHOLD } from "../utils/productUtils";
+import { useConfirm } from "./confirm-context";
+import { useToast } from "./toast-context";
+import { PencilIcon, TrashIcon } from "./icons";
 
 interface ProductRowProps {
   product: Product;
@@ -23,15 +26,25 @@ const ProductRow: React.FC<ProductRowProps> = ({
   onEdit,
   onDelete,
 }) => {
+  const confirm = useConfirm();
+  const { notify } = useToast();
+
   const handleEdit = useCallback(() => {
     onEdit(product);
   }, [product, onEdit]);
 
-  const handleDelete = useCallback(() => {
-    if (window.confirm(`Are you sure you want to delete "${product.name}"?`)) {
+  const handleDelete = useCallback(async () => {
+    const confirmed = await confirm({
+      title: "Delete product?",
+      message: `Are you sure you want to delete "${product.name}"? This action cannot be undone.`,
+      confirmLabel: "Delete",
+      variant: "danger",
+    });
+    if (confirmed) {
       onDelete(product.id);
+      notify("success", `"${product.name}" was deleted.`);
     }
-  }, [product, onDelete]);
+  }, [product, confirm, notify, onDelete]);
 
   return (
     <tr className="hover:bg-gray-50 transition-colors duration-150 group">
@@ -70,10 +83,10 @@ const ProductRow: React.FC<ProductRowProps> = ({
       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
         <div className="inline-flex items-center gap-2 pointer-fine:opacity-70 pointer-fine:group-hover:opacity-100 transition-opacity duration-150">
           <button onClick={handleEdit} className="btn btn-xs btn-soft-primary">
-            Edit
+            <PencilIcon className="w-3.5 h-3.5" /> Edit
           </button>
           <button onClick={handleDelete} className="btn btn-xs btn-soft-danger">
-            Delete
+            <TrashIcon className="w-3.5 h-3.5" /> Delete
           </button>
         </div>
       </td>

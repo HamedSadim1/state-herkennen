@@ -1,5 +1,6 @@
 import React, { useCallback } from "react";
 import { SortConfig, SortField } from "../types/product";
+import { ArrowsUpDownIcon, ChevronUpIcon, ChevronDownIcon } from "./icons";
 
 interface SortControlsProps {
   sortConfig: SortConfig;
@@ -33,8 +34,14 @@ const SortControls: React.FC<SortControlsProps> = ({
   );
 
   const getSortIcon = (field: SortField) => {
-    if (sortConfig.field !== field) return "↕";
-    return sortConfig.direction === "asc" ? "↑" : "↓";
+    if (sortConfig.field !== field) {
+      return <ArrowsUpDownIcon className="w-3.5 h-3.5 text-gray-400" />;
+    }
+    return sortConfig.direction === "asc" ? (
+      <ChevronUpIcon className="w-3.5 h-3.5" />
+    ) : (
+      <ChevronDownIcon className="w-3.5 h-3.5" />
+    );
   };
 
   return (

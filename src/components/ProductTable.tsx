@@ -3,6 +3,13 @@ import { Product, SortConfig, SortField } from "../types/product";
 import ProductRow from "./ProductRow";
 import SortControls from "./SortControls";
 import { exportProductsToCsv, parseCsvToProducts } from "../utils/csv";
+import { useConfirm } from "./confirm-context";
+import { useToast } from "./toast-context";
+import {
+  ArrowDownTrayIcon,
+  ArrowUpTrayIcon,
+  MagnifyingGlassIcon,
+} from "./icons";
 
 const HEADERS: { label: string; field?: SortField }[] = [
   { label: "Product Name", field: "name" },
@@ -32,27 +39,36 @@ const ProductTable: React.FC<ProductTableProps> = ({
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [importError, setImportError] = useState<string | null>(null);
+  const confirm = useConfirm();
+  const { notify } = useToast();
 
   const handleExport = useCallback(() => {
     exportProductsToCsv(products);
-  }, [products]);
+    notify("info", "Inventory exported to CSV.");
+  }, [products, notify]);
 
   const handleImportFile = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
       if (!file) return;
 
       const reader = new FileReader();
-      reader.onload = () => {
+      reader.onload = async () => {
         try {
           const parsed = parseCsvToProducts(String(reader.result));
-          if (
-            window.confirm(
-              `Import ${parsed.length} products? This will replace the current inventory.`
-            )
-          ) {
+          const confirmed = await confirm({
+            title: "Replace inventory?",
+            message: `Import ${parsed.length} products? This will replace the current inventory.`,
+            confirmLabel: "Import",
+            variant: "primary",
+          });
+          if (confirmed) {
             onImportProducts(parsed);
             setImportError(null);
+            notify(
+              "success",
+              `${parsed.length} ${parsed.length === 1 ? "product" : "products"} imported.`
+            );
           }
         } catch (error) {
           setImportError(
@@ -66,7 +82,7 @@ const ProductTable: React.FC<ProductTableProps> = ({
       reader.readAsText(file);
       e.target.value = "";
     },
-    [onImportProducts]
+    [onImportProducts, confirm, notify]
   );
 
   return (
@@ -85,13 +101,13 @@ const ProductTable: React.FC<ProductTableProps> = ({
           <div className="flex items-center gap-3">
             <SortControls sortConfig={sortConfig} onSortChange={onSortChange} />
             <button onClick={handleExport} className="btn btn-sm btn-ghost">
-              ⬇️ Export CSV
+              <ArrowDownTrayIcon className="w-4 h-4" /> Export CSV
             </button>
             <button
               onClick={() => fileInputRef.current?.click()}
               className="btn btn-sm btn-ghost"
             >
-              ⬆️ Import CSV
+              <ArrowUpTrayIcon className="w-4 h-4" /> Import CSV
             </button>
             <label className="sr-only" htmlFor="csv-import">
               Import products from CSV
@@ -158,8 +174,11 @@ const ProductTable: React.FC<ProductTableProps> = ({
 
       {products.length === 0 && (
         <div className="text-center py-16">
-          <div className="text-4xl mb-3" aria-hidden="true">
-            🔍
+          <div
+            className="w-14 h-14 mx-auto mb-3 rounded-full bg-gray-100 flex items-center justify-center text-gray-400"
+            aria-hidden="true"
+          >
+            <MagnifyingGlassIcon className="w-7 h-7" />
           </div>
           <p className="text-gray-600 text-lg font-medium">
             No products found.

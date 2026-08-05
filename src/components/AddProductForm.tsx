@@ -2,6 +2,8 @@ import React, { useState, useCallback } from "react";
 import { Product, Category } from "../types/product";
 import { generateId } from "../utils/formatters";
 import { CATEGORIES } from "../model/data";
+import { useToast } from "./toast-context";
+import { PlusIcon } from "./icons";
 
 interface AddProductFormProps {
   onAddProduct: (product: Product) => void;
@@ -29,6 +31,7 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
     editingProduct?.category ?? "Smartphone"
   );
   const [error, setError] = useState<string | null>(null);
+  const { notify } = useToast();
 
   const resetForm = useCallback(() => {
     setProductName("");
@@ -39,7 +42,7 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
   }, []);
 
   const handleSubmit = useCallback(
-    (e: React.FormEvent) => {
+    (e: React.SubmitEvent<HTMLFormElement>) => {
       e.preventDefault();
 
       const trimmedName = productName.trim();
@@ -69,8 +72,10 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
 
       if (editingProduct && onUpdateProduct) {
         onUpdateProduct(productData);
+        notify("success", `"${trimmedName}" was updated.`);
       } else {
         onAddProduct(productData);
+        notify("success", `"${trimmedName}" was added to the inventory.`);
       }
 
       if (!editingProduct) {
@@ -86,6 +91,7 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
       onAddProduct,
       onUpdateProduct,
       resetForm,
+      notify,
     ]
   );
 
@@ -178,6 +184,7 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
 
         <div className="flex space-x-3">
           <button type="submit" className="btn btn-primary btn-lg">
+            <PlusIcon className="w-4 h-4" />
             {editingProduct ? "Update Product" : "Add Product"}
           </button>
 
