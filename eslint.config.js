@@ -39,6 +39,18 @@ export default tseslint.config(
           ],
         },
       ],
+      // Enforce the cn() utility: a className whose value is directly a
+      // template literal (e.g. `className={`a ${x}`}`) is an error. Templates
+      // nested inside cn(...) arguments stay allowed.
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector:
+            'JSXAttribute[name.name="className"] > JSXExpressionContainer > TemplateLiteral',
+          message:
+            "Template-literal class names are not allowed; use the cn() utility instead.",
+        },
+      ],
     },
   }
 );
