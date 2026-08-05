@@ -1,81 +1,109 @@
 import React, { useCallback } from "react";
-import { Product } from "../types/product";
+import { Product } from "@/types/product";
+import {
+  FALLBACK_CATEGORY,
+  LOW_STOCK_THRESHOLD,
+  type Category,
+} from "@/config/constants";
 import StatusBadge from "./StatusBadge";
-import { formatPrice } from "../utils/formatters";
-import { LOW_STOCK_THRESHOLD } from "../utils/productUtils";
+import { formatPrice } from "@/utils/formatters";
+import { cn } from "@/utils/cn";
+import { useConfirm } from "./confirm-context";
+import { useToast } from "./toast-context";
+import { PencilIcon, TrashIcon } from "./icons";
 
 interface ProductRowProps {
   product: Product;
   onEdit: (product: Product) => void;
   onDelete: (productId: string) => void;
+  onUndoDelete: (productId: string) => void;
 }
 
-const CATEGORY_COLORS: Record<string, string> = {
-  Smartphone: "bg-blue-50 text-blue-700 border-blue-200",
-  Tablet: "bg-purple-50 text-purple-700 border-purple-200",
-  Laptop: "bg-indigo-50 text-indigo-700 border-indigo-200",
-  Audio: "bg-amber-50 text-amber-700 border-amber-200",
-  Accessories: "bg-gray-50 text-gray-700 border-gray-200",
+// Keyed by Category so TypeScript fails the build when a new category is
+// added without a color. The fallback protects against legacy stored data
+// whose category no longer matches the current list.
+const CATEGORY_COLORS: Record<Category, string> = {
+  Smartphone: "chip-blue",
+  Tablet: "chip-purple",
+  Laptop: "chip-indigo",
+  Audio: "chip-amber",
+  Accessories: "chip-gray",
 };
 
-const ProductRow: React.FC<ProductRowProps> = ({ product, onEdit, onDelete }) => {
+const ProductRow: React.FC<ProductRowProps> = ({
+  product,
+  onEdit,
+  onDelete,
+  onUndoDelete,
+}) => {
+  const confirm = useConfirm();
+  const { notify } = useToast();
+
   const handleEdit = useCallback(() => {
     onEdit(product);
   }, [product, onEdit]);
 
-  const handleDelete = useCallback(() => {
-    if (window.confirm(`Are you sure you want to delete "${product.name}"?`)) {
+  const handleDelete = useCallback(async () => {
+    const confirmed = await confirm({
+      title: "Delete product?",
+      message: `Are you sure you want to delete "${product.name}"? This action cannot be undone.`,
+      confirmLabel: "Delete",
+      variant: "danger",
+    });
+    if (confirmed) {
       onDelete(product.id);
+      notify("success", `"${product.name}" was deleted.`, {
+        label: "Undo",
+        onClick: () => onUndoDelete(product.id),
+      });
     }
-  }, [product, onDelete]);
+  }, [product, confirm, notify, onDelete, onUndoDelete]);
 
   return (
     <tr className="hover:bg-gray-50 transition-colors duration-150 group">
       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-        {product.name}
+        <span className="block max-w-64 truncate" title={product.name}>
+          {product.name}
+        </span>
       </td>
       <td className="px-6 py-4 whitespace-nowrap text-sm">
         <span
-          className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-full border ${
-            CATEGORY_COLORS[product.category] ?? CATEGORY_COLORS.Accessories
-          }`}
+          className={cn(
+            "chip",
+            CATEGORY_COLORS[product.category] ??
+              CATEGORY_COLORS[FALLBACK_CATEGORY]
+          )}
         >
           {product.category}
         </span>
       </td>
-      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right tabular-nums">
         {formatPrice(product.price)}
       </td>
-      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right tabular-nums">
         {product.quantity > 0 ? (
           <span>
             {product.quantity}
             {product.quantity <= LOW_STOCK_THRESHOLD && (
-              <span className="ml-1 text-amber-600 text-xs font-medium">
+              <span className="ml-1 text-amber-700 text-xs font-medium">
                 (low)
               </span>
             )}
           </span>
         ) : (
-          <span className="text-gray-400">—</span>
+          <span className="text-gray-500">—</span>
         )}
       </td>
       <td className="px-6 py-4 whitespace-nowrap">
         <StatusBadge quantity={product.quantity} />
       </td>
       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-        <div className="inline-flex items-center gap-2 opacity-70 group-hover:opacity-100 transition-opacity duration-150">
-          <button
-            onClick={handleEdit}
-            className="px-3 py-1.5 text-xs font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors duration-150"
-          >
-            Edit
+        <div className="inline-flex items-center gap-2 pointer-fine:opacity-70 pointer-fine:group-hover:opacity-100 transition-opacity duration-150">
+          <button onClick={handleEdit} className="btn btn-xs btn-soft-primary">
+            <PencilIcon className="w-3.5 h-3.5" /> Edit
           </button>
-          <button
-            onClick={handleDelete}
-            className="px-3 py-1.5 text-xs font-semibold text-red-700 bg-red-50 hover:bg-red-100 rounded-lg transition-colors duration-150"
-          >
-            Delete
+          <button onClick={handleDelete} className="btn btn-xs btn-soft-danger">
+            <TrashIcon className="w-3.5 h-3.5" /> Delete
           </button>
         </div>
       </td>
@@ -83,4 +111,7 @@ const ProductRow: React.FC<ProductRowProps> = ({ product, onEdit, onDelete }) =>
   );
 };
 
-export default ProductRow;
+// Memoized: rows only re-render when their own props change, so typing in the
+// search box (which rebuilds the filtered array with the same product objects)
+// no longer re-renders every row.
+export default React.memo(ProductRow);

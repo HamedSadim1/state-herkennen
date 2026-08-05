@@ -1,7 +1,18 @@
 import React, { useState, useCallback } from "react";
-import { Product, Category } from "../types/product";
-import { generateId } from "../utils/formatters";
-import { CATEGORIES } from "../model/data";
+import { Product } from "@/types/product";
+import {
+  CATEGORIES,
+  CURRENCY_SYMBOL,
+  DEFAULT_CATEGORY,
+  PRICE_CENTS,
+  type Category,
+} from "@/config/constants";
+import { generateId } from "@/utils/formatters";
+import { cn } from "@/utils/cn";
+import { validateProductInput, ProductInputErrors } from "@/utils/productUtils";
+import { useToast } from "./toast-context";
+import FieldError from "./FieldError";
+import { PlusIcon } from "./icons";
 
 interface AddProductFormProps {
   onAddProduct: (product: Product) => void;
@@ -9,6 +20,9 @@ interface AddProductFormProps {
   onUpdateProduct?: (product: Product) => void;
   onCancelEdit?: () => void;
 }
+
+// The form's error state is exactly what the shared validator returns.
+type FieldErrors = ProductInputErrors;
 
 const AddProductForm: React.FC<AddProductFormProps> = ({
   onAddProduct,
@@ -26,38 +40,48 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
     editingProduct ? editingProduct.quantity.toString() : ""
   );
   const [category, setCategory] = useState<Category>(
-    editingProduct?.category ?? "Smartphone"
+    editingProduct?.category ?? DEFAULT_CATEGORY
   );
-  const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { notify } = useToast();
+
+  const clearFieldError = useCallback((field: keyof FieldErrors) => {
+    setFieldErrors((prev) =>
+      prev[field] ? { ...prev, [field]: undefined } : prev
+    );
+  }, []);
 
   const resetForm = useCallback(() => {
     setProductName("");
     setPrice("");
     setQuantity("");
-    setCategory("Smartphone");
-    setError(null);
+    setCategory(DEFAULT_CATEGORY);
+    setFieldErrors({});
   }, []);
 
   const handleSubmit = useCallback(
-    (e: React.FormEvent) => {
+    (e: React.SubmitEvent<HTMLFormElement>) => {
       e.preventDefault();
 
-      const trimmedName = productName.trim();
-      const parsedPrice = parseFloat(price);
-      const parsedQuantity = parseInt(quantity, 10);
+      if (isSubmitting) return;
 
-      if (!trimmedName) {
-        setError("Product name is required.");
+      const trimmedName = productName.trim();
+
+      const errors = validateProductInput({
+        name: productName,
+        price,
+        quantity,
+      });
+      if (Object.keys(errors).length > 0) {
+        setFieldErrors(errors);
         return;
       }
-      if (Number.isNaN(parsedPrice) || parsedPrice < 0) {
-        setError("Enter a valid price of 0 or more.");
-        return;
-      }
-      if (Number.isNaN(parsedQuantity) || parsedQuantity < 0) {
-        setError("Enter a valid quantity of 0 or more.");
-        return;
-      }
+      setFieldErrors({});
+
+      // Round to cents so the stored value matches the displayed value.
+      const parsedPrice = Math.round(Number(price) * PRICE_CENTS) / PRICE_CENTS;
+      const parsedQuantity = Number(quantity);
 
       const productData: Product = {
         id: editingProduct?.id || generateId(),
@@ -67,10 +91,17 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
         category,
       };
 
+      // Briefly lock the button so a rapid double click can't add the same
+      // product twice; the lock releases on the next tick.
+      setIsSubmitting(true);
+      window.setTimeout(() => setIsSubmitting(false), 0);
+
       if (editingProduct && onUpdateProduct) {
         onUpdateProduct(productData);
+        notify("success", `"${trimmedName}" was updated.`);
       } else {
         onAddProduct(productData);
+        notify("success", `"${trimmedName}" was added to the inventory.`);
       }
 
       if (!editingProduct) {
@@ -86,6 +117,8 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
       onAddProduct,
       onUpdateProduct,
       resetForm,
+      notify,
+      isSubmitting,
     ]
   );
 
@@ -94,46 +127,46 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
     resetForm();
   }, [onCancelEdit, resetForm]);
 
-  const inputClassName =
-    "w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-shadow duration-200";
-
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+    <div className="card p-6">
       <h2 className="text-2xl font-bold text-gray-900 mb-6">
         {editingProduct ? "Edit Product" : "Add New Product"}
       </h2>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="md:col-span-2">
-            <label
-              htmlFor="productName"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
+      {/* noValidate: custom validation below drives the UX (red rings + per-field
+          messages) instead of being shadowed by native browser tooltips. */}
+      <form onSubmit={handleSubmit} noValidate className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="md:col-span-3">
+            <label htmlFor="productName" className="field-label">
               Product Name
             </label>
             <input
               type="text"
               id="productName"
               value={productName}
-              onChange={(e) => setProductName(e.target.value)}
+              onChange={(e) => {
+                setProductName(e.target.value);
+                clearFieldError("name");
+              }}
               placeholder="Enter product name"
-              className={inputClassName}
-              required
+              className={cn("input", fieldErrors.name && "input-error")}
+              aria-invalid={fieldErrors.name ? true : undefined}
+              aria-describedby={
+                fieldErrors.name ? "productName-error" : undefined
+              }
             />
+            <FieldError id="productName-error" message={fieldErrors.name} />
           </div>
 
           <div>
-            <label
-              htmlFor="category"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
+            <label htmlFor="product-category" className="field-label">
               Category
             </label>
             <select
-              id="category"
+              id="product-category"
               value={category}
               onChange={(e) => setCategory(e.target.value as Category)}
-              className={inputClassName}
+              className="input"
             >
               {CATEGORIES.map((cat) => (
                 <option key={cat} value={cat}>
@@ -143,62 +176,60 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
             </select>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label
-                htmlFor="price"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Price ($)
-              </label>
-              <input
-                type="number"
-                id="price"
-                value={price}
-                onChange={(e) => setPrice(e.target.value)}
-                placeholder="0.00"
-                min="0"
-                step="0.01"
-                className={inputClassName}
-                required
-              />
-            </div>
-            <div>
-              <label
-                htmlFor="quantity"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Quantity
-              </label>
-              <input
-                type="number"
-                id="quantity"
-                value={quantity}
-                onChange={(e) => setQuantity(e.target.value)}
-                placeholder="0"
-                min="0"
-                step="1"
-                className={inputClassName}
-                required
-              />
-            </div>
+          <div>
+            <label htmlFor="price" className="field-label">
+              Price ({CURRENCY_SYMBOL})
+            </label>
+            <input
+              type="number"
+              id="price"
+              value={price}
+              onChange={(e) => {
+                setPrice(e.target.value);
+                clearFieldError("price");
+              }}
+              placeholder="0.00"
+              min="0"
+              step="0.01"
+              className={cn("input", fieldErrors.price && "input-error")}
+              aria-invalid={fieldErrors.price ? true : undefined}
+              aria-describedby={fieldErrors.price ? "price-error" : undefined}
+            />
+            <FieldError id="price-error" message={fieldErrors.price} />
+          </div>
+
+          <div>
+            <label htmlFor="quantity" className="field-label">
+              Quantity
+            </label>
+            <input
+              type="number"
+              id="quantity"
+              value={quantity}
+              onChange={(e) => {
+                setQuantity(e.target.value);
+                clearFieldError("quantity");
+              }}
+              placeholder="0"
+              min="0"
+              step="1"
+              className={cn("input", fieldErrors.quantity && "input-error")}
+              aria-invalid={fieldErrors.quantity ? true : undefined}
+              aria-describedby={
+                fieldErrors.quantity ? "quantity-error" : undefined
+              }
+            />
+            <FieldError id="quantity-error" message={fieldErrors.quantity} />
           </div>
         </div>
-
-        {error && (
-          <p
-            className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2"
-            role="alert"
-          >
-            {error}
-          </p>
-        )}
 
         <div className="flex space-x-3">
           <button
             type="submit"
-            className="px-6 py-2.5 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 hover:shadow-md active:scale-95"
+            disabled={isSubmitting}
+            className="btn btn-primary btn-lg"
           >
+            <PlusIcon className="w-4 h-4" />
             {editingProduct ? "Update Product" : "Add Product"}
           </button>
 
@@ -206,7 +237,7 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
             <button
               type="button"
               onClick={handleCancel}
-              className="px-6 py-2.5 bg-gray-600 text-white font-medium rounded-lg hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-all duration-200 active:scale-95"
+              className="btn btn-ghost btn-lg"
             >
               Cancel
             </button>

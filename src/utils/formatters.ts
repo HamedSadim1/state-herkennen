@@ -1,7 +1,15 @@
+import { PRICE_CURRENCY, PRICE_LOCALE } from "@/config/constants";
+
+export const pluralize = (
+  count: number,
+  singular: string,
+  plural?: string
+): string => (count === 1 ? singular : (plural ?? `${singular}s`));
+
 export const formatPrice = (price: number): string => {
-  return new Intl.NumberFormat("en-US", {
+  return new Intl.NumberFormat(PRICE_LOCALE, {
     style: "currency",
-    currency: "USD",
+    currency: PRICE_CURRENCY,
   }).format(price);
 };
 

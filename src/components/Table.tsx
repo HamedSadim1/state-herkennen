@@ -1,116 +1,118 @@
-import React, { useState, useCallback, useEffect } from "react";
-import { Product, SortConfig, FilterConfig } from "../types/product";
+import React, { useCallback, useRef } from "react";
+import { Product } from "@/types/product";
 import AddProductForm from "./AddProductForm";
 import ProductTable from "./ProductTable";
 import SearchFilter from "./SearchFilter";
 import StatsDashboard from "./StatsDashboard";
-import {
-  sortProducts,
-  filterProducts,
-  saveProductsToStorage,
-  loadProductsFromStorage,
-} from "../utils/productUtils";
+import { useInventory } from "@/hooks/useInventory";
+import { ChartBarIcon, PlusIcon, MagnifyingGlassIcon, CubeIcon } from "./icons";
 
 interface TableProps {
   products: Product[];
 }
 
 const Table: React.FC<TableProps> = ({ products: initialProducts }) => {
-  const [productList, setProductList] = useState<Product[]>(() => {
-    const stored = loadProductsFromStorage();
-    return stored.length > 0
-      ? stored
-      : initialProducts.map((p) => ({
-          ...p,
-          id: Date.now().toString() + Math.random(),
-        }));
-  });
+  const {
+    productList,
+    editingProduct,
+    sortConfig,
+    filterConfig,
+    visibleProducts,
+    totalProducts,
+    activeStockFilter,
+    filtersActive,
+    startEditing,
+    handleCancelEdit,
+    handleAddProduct,
+    handleUpdateProduct,
+    handleDeleteProduct,
+    handleUndoDelete,
+    handleImportProducts,
+    handleUndoImport,
+    handleResetData,
+    handleSortChange,
+    handleFilterChange,
+    handleResetFilters,
+    handleFilterByStock,
+  } = useInventory(initialProducts);
 
-  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-  const [sortConfig, setSortConfig] = useState<SortConfig>({
-    field: "name",
-    direction: "asc",
-  });
-  const [filterConfig, setFilterConfig] = useState<FilterConfig>({
-    searchTerm: "",
-    category: "all",
-    showInStockOnly: false,
-    showOutOfStockOnly: false,
-  });
+  // Scrolled into view when the user starts editing, so the form is never
+  // silently updated off-screen.
+  const formContainerRef = useRef<HTMLDivElement>(null);
 
-  // Save to localStorage whenever productList changes
-  useEffect(() => {
-    saveProductsToStorage(productList);
-  }, [productList]);
-
-  const handleAddProduct = useCallback((newProduct: Product) => {
-    setProductList((prev) => [...prev, newProduct]);
-  }, []);
-
-  const handleEditProduct = useCallback((product: Product) => {
-    setEditingProduct(product);
-  }, []);
-
-  const handleUpdateProduct = useCallback((updatedProduct: Product) => {
-    setProductList((prev) =>
-      prev.map((product) =>
-        product.id === updatedProduct.id ? updatedProduct : product
-      )
-    );
-    setEditingProduct(null);
-  }, []);
-
-  const handleDeleteProduct = useCallback((productId: string) => {
-    setProductList((prev) =>
-      prev.filter((product) => product.id !== productId)
-    );
-  }, []);
-
-  const handleImportProducts = useCallback((importedProducts: Product[]) => {
-    setProductList(importedProducts);
-  }, []);
-
-  const handleCancelEdit = useCallback(() => {
-    setEditingProduct(null);
-  }, []);
-
-  const handleSortChange = useCallback((config: SortConfig) => {
-    setSortConfig(config);
-  }, []);
-
-  const handleFilterChange = useCallback((config: FilterConfig) => {
-    setFilterConfig(config);
-  }, []);
-
-  // Apply filtering and sorting
-  const filteredProducts = filterProducts(productList, filterConfig);
-  const sortedAndFilteredProducts = sortProducts(filteredProducts, sortConfig);
+  const handleEditProduct = useCallback(
+    (product: Product) => {
+      startEditing(product);
+      formContainerRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    },
+    [startEditing]
+  );
 
   return (
     <div className="space-y-6">
-      <StatsDashboard products={productList} />
+      <nav
+        aria-label="Page sections"
+        className="flex flex-wrap justify-center gap-2"
+      >
+        <a href="#overview" className="btn btn-sm btn-ghost">
+          <ChartBarIcon className="w-4 h-4" /> Overview
+        </a>
+        <a href="#add-product" className="btn btn-sm btn-ghost">
+          <PlusIcon className="w-4 h-4" /> Add Product
+        </a>
+        <a href="#filters" className="btn btn-sm btn-ghost">
+          <MagnifyingGlassIcon className="w-4 h-4" /> Filters
+        </a>
+        <a href="#inventory" className="btn btn-sm btn-ghost">
+          <CubeIcon className="w-4 h-4" /> Inventory
+        </a>
+      </nav>
 
-      <AddProductForm
-        key={editingProduct?.id ?? "new-product"}
-        onAddProduct={handleAddProduct}
-        editingProduct={editingProduct}
-        onUpdateProduct={handleUpdateProduct}
-        onCancelEdit={handleCancelEdit}
-      />
+      <section id="overview" className="scroll-mt-6">
+        <StatsDashboard
+          products={productList}
+          activeStockFilter={activeStockFilter}
+          hasAnyFilter={filtersActive}
+          onFilterByStock={handleFilterByStock}
+        />
+      </section>
 
-      <SearchFilter
-        filterConfig={filterConfig}
-        onFilterChange={handleFilterChange}
-      />
+      <div id="add-product" ref={formContainerRef} className="scroll-mt-6">
+        <AddProductForm
+          key={editingProduct?.id ?? "new-product"}
+          onAddProduct={handleAddProduct}
+          editingProduct={editingProduct}
+          onUpdateProduct={handleUpdateProduct}
+          onCancelEdit={handleCancelEdit}
+        />
+      </div>
 
-      <ProductTable
-        products={sortedAndFilteredProducts}
-        sortConfig={sortConfig}
-        onSortChange={handleSortChange}
-        onEditProduct={handleEditProduct}
-        onDeleteProduct={handleDeleteProduct}
-        onImportProducts={handleImportProducts}
-      />
+      <section id="filters" className="scroll-mt-6">
+        <SearchFilter
+          filterConfig={filterConfig}
+          onFilterChange={handleFilterChange}
+        />
+      </section>
+
+      <section id="inventory" className="scroll-mt-6">
+        <ProductTable
+          products={visibleProducts}
+          totalProducts={totalProducts}
+          sortConfig={sortConfig}
+          filtersActive={filtersActive}
+          onClearFilters={handleResetFilters}
+          onSortChange={handleSortChange}
+          onEditProduct={handleEditProduct}
+          onDeleteProduct={handleDeleteProduct}
+          onImportProducts={handleImportProducts}
+          onUndoImport={handleUndoImport}
+          onResetData={handleResetData}
+          onUndoDelete={handleUndoDelete}
+        />
+      </section>
     </div>
   );
 };

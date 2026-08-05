@@ -1,132 +1,159 @@
-import React, { useRef, useCallback, useState } from "react";
-import { Product, SortConfig } from "../types/product";
+import React, { useCallback } from "react";
+import { Product, SortConfig, SortField } from "@/types/product";
 import ProductRow from "./ProductRow";
 import SortControls from "./SortControls";
-import { exportProductsToCsv, parseCsvToProducts } from "../utils/csv";
+import TableToolbar from "./TableToolbar";
+import EmptyState from "./EmptyState";
+import { exportProductsToCsv } from "@/utils/csv";
+import { getNextSortConfig } from "@/utils/productUtils";
+import { SORT_FIELDS } from "@/config/constants";
+import { pluralize } from "@/utils/formatters";
+import { cn } from "@/utils/cn";
+import { useToast } from "./toast-context";
+import SortIndicator from "./SortIndicator";
+
+const HEADERS: { label: string; field?: SortField }[] = [
+  // Sortable columns come from the shared SORT_FIELDS config so the toolbar
+  // buttons and the table headers can never drift apart.
+  ...SORT_FIELDS.map(({ field, headerLabel }) => ({
+    label: headerLabel,
+    field,
+  })),
+  { label: "Status" },
+  { label: "Actions" },
+];
 
 interface ProductTableProps {
   products: Product[];
+  totalProducts: number;
   sortConfig: SortConfig;
+  filtersActive: boolean;
+  onClearFilters: () => void;
   onSortChange: (config: SortConfig) => void;
   onEditProduct: (product: Product) => void;
   onDeleteProduct: (productId: string) => void;
   onImportProducts: (products: Product[]) => void;
+  onUndoImport: () => void;
+  onResetData: () => void;
+  onUndoDelete: (productId: string) => void;
 }
 
 const ProductTable: React.FC<ProductTableProps> = ({
   products,
+  totalProducts,
   sortConfig,
+  filtersActive,
+  onClearFilters,
   onSortChange,
   onEditProduct,
   onDeleteProduct,
   onImportProducts,
+  onUndoImport,
+  onResetData,
+  onUndoDelete,
 }) => {
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [importError, setImportError] = useState<string | null>(null);
+  const { notify } = useToast();
 
   const handleExport = useCallback(() => {
     exportProductsToCsv(products);
-  }, [products]);
+    notify("info", "Inventory exported to CSV.");
+  }, [products, notify]);
 
-  const handleImportFile = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (!file) return;
+  const productNoun = pluralize(totalProducts, "product");
 
-      const reader = new FileReader();
-      reader.onload = () => {
-        try {
-          const parsed = parseCsvToProducts(String(reader.result));
-          if (
-            window.confirm(
-              `Import ${parsed.length} products? This will replace the current inventory.`
-            )
-          ) {
-            onImportProducts(parsed);
-            setImportError(null);
-          }
-        } catch (error) {
-          setImportError(
-            error instanceof Error ? error.message : "Failed to import CSV."
-          );
-        }
-      };
-      reader.onerror = () => {
-        setImportError("Failed to read the file.");
-      };
-      reader.readAsText(file);
-      e.target.value = "";
-    },
-    [onImportProducts]
+  const shownLabel =
+    products.length === totalProducts
+      ? `${totalProducts} ${productNoun} shown`
+      : `Showing ${products.length} of ${totalProducts} ${productNoun}`;
+
+  const titleBlock = (
+    <div>
+      <h2 className="text-2xl font-bold text-gray-900">Product Inventory</h2>
+      <p aria-live="polite" className="text-sm text-gray-600 mt-0.5">
+        {shownLabel}
+      </p>
+    </div>
   );
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-      <div className="px-6 py-4 border-b border-gray-100">
-        <div className="flex flex-wrap justify-between items-center gap-4">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900">
-              Product Inventory
-            </h2>
-            <p className="text-sm text-gray-500 mt-0.5">
-              {products.length} {products.length === 1 ? "product" : "products"} shown
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-            <SortControls sortConfig={sortConfig} onSortChange={onSortChange} />
-            <button
-              onClick={handleExport}
-              className="px-3 py-1.5 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors duration-150"
-            >
-              ⬇️ Export CSV
-            </button>
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              className="px-3 py-1.5 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors duration-150"
-            >
-              ⬆️ Import CSV
-            </button>
-            <label className="sr-only" htmlFor="csv-import">
-              Import products from CSV
-            </label>
-            <input
-              ref={fileInputRef}
-              id="csv-import"
-              type="file"
-              accept=".csv,text/csv"
-              onChange={handleImportFile}
-              className="hidden"
-            />
-          </div>
-        </div>
-        {importError && (
-          <p className="mt-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2" role="alert">
-            {importError}
-          </p>
-        )}
-      </div>
+    <div className="card overflow-clip">
+      <TableToolbar
+        title={titleBlock}
+        actions={
+          <SortControls sortConfig={sortConfig} onSortChange={onSortChange} />
+        }
+        exportCount={products.length}
+        onExport={handleExport}
+        onImportProducts={onImportProducts}
+        onUndoImport={onUndoImport}
+        onResetData={onResetData}
+      />
 
-      <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+      <div className="overflow-x-auto overflow-y-clip">
+        {/* border-separate overrides Tailwind's border-collapse: collapse, which
+            makes Chrome paint a stray 1px black line on a random row whenever
+            the rows are reordered (sorting) — the artifact moves between rows
+            on every sort. Separate borders render independently, so no shared
+            collapsed border can glitch. */}
+        <table className="min-w-full divide-y divide-gray-200 border-separate border-spacing-0">
+          <thead className="bg-gray-50 sticky top-0 z-10">
             <tr>
-              {[
-                "Product Name",
-                "Category",
-                "Price",
-                "Quantity",
-                "Status",
-                "Actions",
-              ].map((header) => (
-                <th
-                  key={header}
-                  className={`px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider ${
-                    header === "Actions" ? "text-right" : ""
-                  }`}
-                >
-                  {header}
-                </th>
-              ))}
+              {HEADERS.map(({ label, field }) => {
+                const isSorted = field != null && sortConfig.field === field;
+                const isRightAligned =
+                  label === "Actions" ||
+                  field === "price" ||
+                  field === "quantity";
+                return (
+                  <th
+                    key={label}
+                    scope="col"
+                    aria-sort={
+                      isSorted
+                        ? sortConfig.direction === "asc"
+                          ? "ascending"
+                          : "descending"
+                        : undefined
+                    }
+                    className={cn(
+                      "px-6 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider",
+                      isRightAligned ? "text-right" : "text-left"
+                    )}
+                  >
+                    {field ? (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          onSortChange(getNextSortConfig(sortConfig, field))
+                        }
+                        aria-label={`Sort by ${label}${
+                          isSorted
+                            ? `, current sort ${
+                                sortConfig.direction === "asc"
+                                  ? "ascending"
+                                  : "descending"
+                              }`
+                            : ""
+                        }`}
+                        className={cn(
+                          "inline-flex items-center gap-1.5 w-full whitespace-nowrap text-xs font-semibold uppercase tracking-wider text-gray-600 transition-colors hover:text-gray-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded",
+                          isRightAligned ? "justify-end" : "justify-start"
+                        )}
+                      >
+                        {label}
+                        <span aria-hidden="true">
+                          <SortIndicator
+                            field={field}
+                            sortConfig={sortConfig}
+                          />
+                        </span>
+                      </button>
+                    ) : (
+                      label
+                    )}
+                  </th>
+                );
+              })}
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-100">
@@ -136,6 +163,7 @@ const ProductTable: React.FC<ProductTableProps> = ({
                 product={product}
                 onEdit={onEditProduct}
                 onDelete={onDeleteProduct}
+                onUndoDelete={onUndoDelete}
               />
             ))}
           </tbody>
@@ -143,15 +171,10 @@ const ProductTable: React.FC<ProductTableProps> = ({
       </div>
 
       {products.length === 0 && (
-        <div className="text-center py-16">
-          <div className="text-4xl mb-3" aria-hidden="true">
-            🔍
-          </div>
-          <p className="text-gray-600 text-lg font-medium">No products found.</p>
-          <p className="text-gray-400 text-sm mt-1">
-            Try adjusting your search, category or filter criteria.
-          </p>
-        </div>
+        <EmptyState
+          filtersActive={filtersActive}
+          onClearFilters={onClearFilters}
+        />
       )}
     </div>
   );
