@@ -1,4 +1,5 @@
-export type Category = "Smartphone" | "Tablet" | "Laptop" | "Audio" | "Accessories";
+export type Category =
+  "Smartphone" | "Tablet" | "Laptop" | "Audio" | "Accessories";
 
 export interface Product {
   id: string;
@@ -20,6 +21,7 @@ export interface FilterConfig {
   searchTerm: string;
   category: Category | "all";
   showInStockOnly: boolean;
+  showLowStockOnly: boolean;
   showOutOfStockOnly: boolean;
 }
 

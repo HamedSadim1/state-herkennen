@@ -20,6 +20,7 @@ interface StatCardProps {
   icon: React.ReactNode;
   accent: string;
   iconBg: string;
+  alignEnd?: boolean;
   className?: string;
 }
 
@@ -29,11 +30,14 @@ const StatCard: React.FC<StatCardProps> = ({
   icon,
   accent,
   iconBg,
+  alignEnd = false,
   className = "",
 }) => {
   return (
     <div
-      className={`bg-white rounded-2xl shadow-sm border border-gray-100 p-5 flex items-center gap-4 transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 ${className}`}
+      className={`bg-white rounded-2xl shadow-sm border border-gray-100 p-5 flex items-center gap-4 transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 ${className} ${
+        alignEnd ? "sm:justify-between" : ""
+      }`}
     >
       <div
         className={`w-12 h-12 rounded-xl flex items-center justify-center ${iconBg}`}
@@ -41,8 +45,8 @@ const StatCard: React.FC<StatCardProps> = ({
       >
         {icon}
       </div>
-      <div className="min-w-0">
-        <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
+      <div className={`min-w-0 ${alignEnd ? "sm:text-right" : ""}`}>
+        <p className="text-xs font-medium uppercase tracking-wide text-gray-600">
           {label}
         </p>
         <p className={`text-2xl font-bold tabular-nums ${accent} truncate`}>
@@ -109,7 +113,8 @@ const StatsDashboard: React.FC<StatsDashboardProps> = ({ products }) => {
         icon={<BanknotesIcon className="w-6 h-6 text-indigo-600" />}
         accent="text-indigo-600"
         iconBg="bg-indigo-100"
-        className="sm:col-span-2 lg:col-span-full sm:justify-between"
+        alignEnd
+        className="sm:col-span-2 lg:col-span-full"
       />
     </div>
   );

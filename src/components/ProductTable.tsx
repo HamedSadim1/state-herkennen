@@ -3,8 +3,10 @@ import { Product, SortConfig, SortField } from "../types/product";
 import ProductRow from "./ProductRow";
 import SortControls from "./SortControls";
 import { exportProductsToCsv, parseCsvToProducts } from "../utils/csv";
+import { getNextSortConfig } from "../utils/productUtils";
 import { useConfirm } from "./confirm-context";
 import { useToast } from "./toast-context";
+import SortIndicator from "./SortIndicator";
 import {
   ArrowDownTrayIcon,
   ArrowUpTrayIcon,
@@ -22,6 +24,7 @@ const HEADERS: { label: string; field?: SortField }[] = [
 
 interface ProductTableProps {
   products: Product[];
+  totalProducts: number;
   sortConfig: SortConfig;
   onSortChange: (config: SortConfig) => void;
   onEditProduct: (product: Product) => void;
@@ -31,6 +34,7 @@ interface ProductTableProps {
 
 const ProductTable: React.FC<ProductTableProps> = ({
   products,
+  totalProducts,
   sortConfig,
   onSortChange,
   onEditProduct,
@@ -55,20 +59,34 @@ const ProductTable: React.FC<ProductTableProps> = ({
       const reader = new FileReader();
       reader.onload = async () => {
         try {
-          const parsed = parseCsvToProducts(String(reader.result));
+          const { products: importedProducts, warnings } = parseCsvToProducts(
+            String(reader.result)
+          );
           const confirmed = await confirm({
             title: "Replace inventory?",
-            message: `Import ${parsed.length} products? This will replace the current inventory.`,
+            message: `Import ${importedProducts.length} products? This will replace the current inventory.`,
             confirmLabel: "Import",
             variant: "primary",
           });
           if (confirmed) {
-            onImportProducts(parsed);
+            onImportProducts(importedProducts);
             setImportError(null);
             notify(
               "success",
-              `${parsed.length} ${parsed.length === 1 ? "product" : "products"} imported.`
+              `${importedProducts.length} ${
+                importedProducts.length === 1 ? "product" : "products"
+              } imported.`
             );
+            if (warnings.length > 0) {
+              notify(
+                "info",
+                `${warnings.length} ${
+                  warnings.length === 1 ? "row had" : "rows had"
+                } an unknown category and ${
+                  warnings.length === 1 ? "was" : "were"
+                } set to Accessories.`
+              );
+            }
           }
         } catch (error) {
           setImportError(
@@ -84,19 +102,22 @@ const ProductTable: React.FC<ProductTableProps> = ({
     },
     [onImportProducts, confirm, notify]
   );
+  const productNoun = totalProducts === 1 ? "product" : "products";
+
+  const shownLabel =
+    products.length === totalProducts
+      ? `${totalProducts} ${productNoun} shown`
+      : `Showing ${products.length} of ${totalProducts} ${productNoun}`;
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-clip">
       <div className="px-6 py-4 border-b border-gray-100">
         <div className="flex flex-wrap justify-between items-center gap-4">
           <div>
             <h2 className="text-2xl font-bold text-gray-900">
               Product Inventory
             </h2>
-            <p className="text-sm text-gray-500 mt-0.5">
-              {products.length} {products.length === 1 ? "product" : "products"}{" "}
-              shown
-            </p>
+            <p className="text-sm text-gray-600 mt-0.5">{shownLabel}</p>
           </div>
           <div className="flex items-center gap-3">
             <SortControls sortConfig={sortConfig} onSortChange={onSortChange} />
@@ -129,15 +150,20 @@ const ProductTable: React.FC<ProductTableProps> = ({
         )}
       </div>
 
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto overflow-y-clip">
         <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+          <thead className="bg-gray-50 sticky top-0 z-10">
             <tr>
               {HEADERS.map(({ label, field }) => {
                 const isSorted = field != null && sortConfig.field === field;
+                const isRightAligned =
+                  label === "Actions" ||
+                  field === "price" ||
+                  field === "quantity";
                 return (
                   <th
                     key={label}
+                    scope="col"
                     aria-sort={
                       isSorted
                         ? sortConfig.direction === "asc"
@@ -146,14 +172,39 @@ const ProductTable: React.FC<ProductTableProps> = ({
                         : undefined
                     }
                     className={`px-6 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider ${
-                      label === "Actions" ||
-                      field === "price" ||
-                      field === "quantity"
-                        ? "text-right"
-                        : "text-left"
+                      isRightAligned ? "text-right" : "text-left"
                     }`}
                   >
-                    {label}
+                    {field ? (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          onSortChange(getNextSortConfig(sortConfig, field))
+                        }
+                        aria-label={`Sort by ${label}${
+                          isSorted
+                            ? `, current sort ${
+                                sortConfig.direction === "asc"
+                                  ? "ascending"
+                                  : "descending"
+                              }`
+                            : ""
+                        }`}
+                        className={`inline-flex items-center gap-1.5 w-full whitespace-nowrap text-xs font-semibold uppercase tracking-wider text-gray-600 transition-colors hover:text-gray-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded ${
+                          isRightAligned ? "justify-end" : "justify-start"
+                        }`}
+                      >
+                        {label}
+                        <span aria-hidden="true">
+                          <SortIndicator
+                            field={field}
+                            sortConfig={sortConfig}
+                          />
+                        </span>
+                      </button>
+                    ) : (
+                      label
+                    )}
                   </th>
                 );
               })}
@@ -183,7 +234,7 @@ const ProductTable: React.FC<ProductTableProps> = ({
           <p className="text-gray-600 text-lg font-medium">
             No products found.
           </p>
-          <p className="text-gray-500 text-sm mt-1">
+          <p className="text-gray-600 text-sm mt-1">
             Try adjusting your search, category or filter criteria.
           </p>
         </div>

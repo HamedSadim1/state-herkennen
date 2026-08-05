@@ -1,4 +1,9 @@
-import { Product, SortConfig, FilterConfig, StockStatus } from "../types/product";
+import {
+  Product,
+  SortConfig,
+  FilterConfig,
+  StockStatus,
+} from "../types/product";
 
 export const LOW_STOCK_THRESHOLD = 5;
 
@@ -8,7 +13,16 @@ export const getStockStatus = (quantity: number): StockStatus => {
   return "inStock";
 };
 
-export const isInStock = (product: Product): boolean => product.quantity > 0;
+// Returns the sort config that results from clicking a sortable field:
+// toggles direction when the field is already active, otherwise sorts asc.
+export const getNextSortConfig = (
+  current: SortConfig,
+  field: SortConfig["field"]
+): SortConfig => {
+  const direction =
+    current.field === field && current.direction === "asc" ? "desc" : "asc";
+  return { field, direction };
+};
 
 export const sortProducts = (
   products: Product[],
@@ -45,10 +59,19 @@ export const filterProducts = (
       filterConfig.category === "all" ||
       product.category === filterConfig.category;
 
+    // Stock filters mirror the dashboard semantics exactly (see getStockStatus),
+    // so "In Stock" means truly in stock and low-stock products can be filtered
+    // on their own instead of being lumped in with in-stock items.
+    const noStockFilter =
+      !filterConfig.showInStockOnly &&
+      !filterConfig.showLowStockOnly &&
+      !filterConfig.showOutOfStockOnly;
+    const stockStatus = getStockStatus(product.quantity);
     const matchesStockFilter =
-      (!filterConfig.showInStockOnly && !filterConfig.showOutOfStockOnly) ||
-      (filterConfig.showInStockOnly && isInStock(product)) ||
-      (filterConfig.showOutOfStockOnly && !isInStock(product));
+      noStockFilter ||
+      (filterConfig.showInStockOnly && stockStatus === "inStock") ||
+      (filterConfig.showLowStockOnly && stockStatus === "lowStock") ||
+      (filterConfig.showOutOfStockOnly && stockStatus === "outOfStock");
 
     return matchesSearch && matchesCategory && matchesStockFilter;
   });

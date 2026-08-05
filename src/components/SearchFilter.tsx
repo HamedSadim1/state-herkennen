@@ -12,8 +12,11 @@ const DEFAULT_FILTERS: FilterConfig = {
   searchTerm: "",
   category: "all",
   showInStockOnly: false,
+  showLowStockOnly: false,
   showOutOfStockOnly: false,
 };
+
+type StockFilterType = "all" | "inStock" | "lowStock" | "outOfStock";
 
 const SearchFilter: React.FC<SearchFilterProps> = ({
   filterConfig,
@@ -47,10 +50,11 @@ const SearchFilter: React.FC<SearchFilterProps> = ({
   );
 
   const handleStockFilterChange = useCallback(
-    (filterType: "inStock" | "outOfStock" | "all") => {
+    (filterType: StockFilterType) => {
       onFilterChange({
         ...filterConfig,
         showInStockOnly: filterType === "inStock",
+        showLowStockOnly: filterType === "lowStock",
         showOutOfStockOnly: filterType === "outOfStock",
       });
     },
@@ -68,12 +72,17 @@ const SearchFilter: React.FC<SearchFilterProps> = ({
     filterConfig.searchTerm !== "" ||
     filterConfig.category !== "all" ||
     filterConfig.showInStockOnly ||
+    filterConfig.showLowStockOnly ||
     filterConfig.showOutOfStockOnly;
 
   const activeFilterCount =
     (filterConfig.searchTerm !== "" ? 1 : 0) +
     (filterConfig.category !== "all" ? 1 : 0) +
-    (filterConfig.showInStockOnly || filterConfig.showOutOfStockOnly ? 1 : 0);
+    (filterConfig.showInStockOnly ||
+    filterConfig.showLowStockOnly ||
+    filterConfig.showOutOfStockOnly
+      ? 1
+      : 0);
 
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
@@ -116,7 +125,7 @@ const SearchFilter: React.FC<SearchFilterProps> = ({
                 type="button"
                 onClick={clearSearch}
                 aria-label="Clear search"
-                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
               >
                 <XMarkIcon className="w-4 h-4" />
               </button>
@@ -150,10 +159,14 @@ const SearchFilter: React.FC<SearchFilterProps> = ({
           <button
             onClick={() => handleStockFilterChange("all")}
             aria-pressed={
-              !filterConfig.showInStockOnly && !filterConfig.showOutOfStockOnly
+              !filterConfig.showInStockOnly &&
+              !filterConfig.showLowStockOnly &&
+              !filterConfig.showOutOfStockOnly
             }
             className={stockButtonClassName(
-              !filterConfig.showInStockOnly && !filterConfig.showOutOfStockOnly,
+              !filterConfig.showInStockOnly &&
+                !filterConfig.showLowStockOnly &&
+                !filterConfig.showOutOfStockOnly,
               "btn-neutral"
             )}
           >
@@ -168,6 +181,16 @@ const SearchFilter: React.FC<SearchFilterProps> = ({
             )}
           >
             In Stock
+          </button>
+          <button
+            onClick={() => handleStockFilterChange("lowStock")}
+            aria-pressed={filterConfig.showLowStockOnly}
+            className={stockButtonClassName(
+              filterConfig.showLowStockOnly,
+              "btn-warning"
+            )}
+          >
+            Low Stock
           </button>
           <button
             onClick={() => handleStockFilterChange("outOfStock")}

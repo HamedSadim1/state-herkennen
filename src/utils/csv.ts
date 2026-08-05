@@ -64,7 +64,12 @@ const parseCsvRow = (line: string): string[] => {
   return cells;
 };
 
-export const parseCsvToProducts = (csvText: string): Product[] => {
+export interface ParseCsvResult {
+  products: Product[];
+  warnings: string[];
+}
+
+export const parseCsvToProducts = (csvText: string): ParseCsvResult => {
   const lines = csvText
     .split(/\r?\n/)
     .map((line) => line.trim())
@@ -74,10 +79,20 @@ export const parseCsvToProducts = (csvText: string): Product[] => {
     throw new Error("The CSV file is empty.");
   }
 
-  // Skip header row if it matches our known headers
-  const dataLines = lines[0].toLowerCase().includes("name")
-    ? lines.slice(1)
-    : lines;
+  // Skip the header row only when the first cell is actually one of our known
+  // headers (id/name) — a data row can't be mistaken for a header this way.
+  const firstCell = parseCsvRow(lines[0])[0]?.toLowerCase().trim() ?? "";
+  const dataLines =
+    firstCell === "id" || firstCell === "name" ? lines.slice(1) : lines;
+
+  const warnings: string[] = [];
+  const validCategories: Category[] = [
+    "Smartphone",
+    "Tablet",
+    "Laptop",
+    "Audio",
+    "Accessories",
+  ];
 
   const products: Product[] = dataLines.map((line, index) => {
     const cells = parseCsvRow(line);
@@ -102,24 +117,21 @@ export const parseCsvToProducts = (csvText: string): Product[] => {
       );
     }
 
-    const validCategories: Category[] = [
-      "Smartphone",
-      "Tablet",
-      "Laptop",
-      "Audio",
-      "Accessories",
-    ];
+    const isKnownCategory = validCategories.includes(category as Category);
+    if (!isKnownCategory) {
+      warnings.push(
+        `Row ${index + 1} ("${name}"): unknown category "${category || "—"}" — set to Accessories.`
+      );
+    }
 
     return {
       id: id || generateId(),
       name,
-      category: validCategories.includes(category as Category)
-        ? (category as Category)
-        : "Accessories",
+      category: isKnownCategory ? (category as Category) : "Accessories",
       price: parsedPrice,
       quantity: parsedQuantity,
     };
   });
 
-  return products;
+  return { products, warnings };
 };

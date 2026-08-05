@@ -49,7 +49,9 @@ const ProductRow: React.FC<ProductRowProps> = ({
   return (
     <tr className="hover:bg-gray-50 transition-colors duration-150 group">
       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-        {product.name}
+        <span className="block max-w-64 truncate" title={product.name}>
+          {product.name}
+        </span>
       </td>
       <td className="px-6 py-4 whitespace-nowrap text-sm">
         <span

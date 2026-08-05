@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
 import { Product, SortConfig, FilterConfig } from "../types/product";
 import AddProductForm from "./AddProductForm";
 import ProductTable from "./ProductTable";
@@ -35,8 +35,13 @@ const Table: React.FC<TableProps> = ({ products: initialProducts }) => {
     searchTerm: "",
     category: "all",
     showInStockOnly: false,
+    showLowStockOnly: false,
     showOutOfStockOnly: false,
   });
+
+  // Scrolled into view when the user starts editing, so the form is never
+  // silently updated off-screen.
+  const formContainerRef = useRef<HTMLDivElement>(null);
 
   // Save to localStorage whenever productList changes
   useEffect(() => {
@@ -49,6 +54,10 @@ const Table: React.FC<TableProps> = ({ products: initialProducts }) => {
 
   const handleEditProduct = useCallback((product: Product) => {
     setEditingProduct(product);
+    formContainerRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
   }, []);
 
   const handleUpdateProduct = useCallback((updatedProduct: Product) => {
@@ -68,6 +77,9 @@ const Table: React.FC<TableProps> = ({ products: initialProducts }) => {
 
   const handleImportProducts = useCallback((importedProducts: Product[]) => {
     setProductList(importedProducts);
+    // The imported inventory replaces the list, so an in-progress edit would
+    // target a product that no longer exists.
+    setEditingProduct(null);
   }, []);
 
   const handleCancelEdit = useCallback(() => {
@@ -90,13 +102,15 @@ const Table: React.FC<TableProps> = ({ products: initialProducts }) => {
     <div className="space-y-6">
       <StatsDashboard products={productList} />
 
-      <AddProductForm
-        key={editingProduct?.id ?? "new-product"}
-        onAddProduct={handleAddProduct}
-        editingProduct={editingProduct}
-        onUpdateProduct={handleUpdateProduct}
-        onCancelEdit={handleCancelEdit}
-      />
+      <div ref={formContainerRef} className="scroll-mt-6">
+        <AddProductForm
+          key={editingProduct?.id ?? "new-product"}
+          onAddProduct={handleAddProduct}
+          editingProduct={editingProduct}
+          onUpdateProduct={handleUpdateProduct}
+          onCancelEdit={handleCancelEdit}
+        />
+      </div>
 
       <SearchFilter
         filterConfig={filterConfig}
@@ -105,6 +119,7 @@ const Table: React.FC<TableProps> = ({ products: initialProducts }) => {
 
       <ProductTable
         products={sortedAndFilteredProducts}
+        totalProducts={productList.length}
         sortConfig={sortConfig}
         onSortChange={handleSortChange}
         onEditProduct={handleEditProduct}

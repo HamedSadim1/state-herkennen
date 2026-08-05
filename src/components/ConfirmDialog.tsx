@@ -19,6 +19,7 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   onConfirm,
   onCancel,
 }) => {
+  const dialogRef = useRef<HTMLDivElement>(null);
   const confirmButtonRef = useRef<HTMLButtonElement>(null);
   const cancelButtonRef = useRef<HTMLButtonElement>(null);
   const previouslyFocusedRef = useRef<Element | null>(null);
@@ -43,7 +44,27 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
     document.body.style.overflow = "hidden";
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onCancel();
+      if (event.key === "Escape") {
+        onCancel();
+        return;
+      }
+
+      // Simple focus trap: keep Tab cycling through the dialog's buttons so
+      // keyboard users can't tab into the page behind the overlay.
+      if (event.key !== "Tab") return;
+      const focusable = dialogRef.current?.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      );
+      if (!focusable || focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
     };
     document.addEventListener("keydown", handleKeyDown);
 
@@ -80,7 +101,10 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
         onClick={onCancel}
         aria-hidden="true"
       />
-      <div className="relative w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl animate-modal-in">
+      <div
+        ref={dialogRef}
+        className="relative w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl animate-modal-in"
+      >
         <div className="flex items-start gap-4">
           <div
             className={`w-11 h-11 rounded-full flex items-center justify-center shrink-0 ${

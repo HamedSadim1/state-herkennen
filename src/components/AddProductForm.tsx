@@ -31,6 +31,7 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
     editingProduct?.category ?? "Smartphone"
   );
   const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { notify } = useToast();
 
   const resetForm = useCallback(() => {
@@ -44,6 +45,8 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
   const handleSubmit = useCallback(
     (e: React.SubmitEvent<HTMLFormElement>) => {
       e.preventDefault();
+
+      if (isSubmitting) return;
 
       const trimmedName = productName.trim();
       const parsedPrice = parseFloat(price);
@@ -70,6 +73,11 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
         category,
       };
 
+      // Briefly lock the button so a rapid double click can't add the same
+      // product twice; the lock releases on the next tick.
+      setIsSubmitting(true);
+      window.setTimeout(() => setIsSubmitting(false), 0);
+
       if (editingProduct && onUpdateProduct) {
         onUpdateProduct(productData);
         notify("success", `"${trimmedName}" was updated.`);
@@ -92,6 +100,7 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
       onUpdateProduct,
       resetForm,
       notify,
+      isSubmitting,
     ]
   );
 
@@ -106,8 +115,8 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
         {editingProduct ? "Edit Product" : "Add New Product"}
       </h2>
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="md:col-span-2">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="md:col-span-3">
             <label htmlFor="productName" className="field-label">
               Product Name
             </label>
@@ -140,39 +149,38 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
             </select>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="price" className="field-label">
-                Price ($)
-              </label>
-              <input
-                type="number"
-                id="price"
-                value={price}
-                onChange={(e) => setPrice(e.target.value)}
-                placeholder="0.00"
-                min="0"
-                step="0.01"
-                className="input"
-                required
-              />
-            </div>
-            <div>
-              <label htmlFor="quantity" className="field-label">
-                Quantity
-              </label>
-              <input
-                type="number"
-                id="quantity"
-                value={quantity}
-                onChange={(e) => setQuantity(e.target.value)}
-                placeholder="0"
-                min="0"
-                step="1"
-                className="input"
-                required
-              />
-            </div>
+          <div>
+            <label htmlFor="price" className="field-label">
+              Price ($)
+            </label>
+            <input
+              type="number"
+              id="price"
+              value={price}
+              onChange={(e) => setPrice(e.target.value)}
+              placeholder="0.00"
+              min="0"
+              step="0.01"
+              className="input"
+              required
+            />
+          </div>
+
+          <div>
+            <label htmlFor="quantity" className="field-label">
+              Quantity
+            </label>
+            <input
+              type="number"
+              id="quantity"
+              value={quantity}
+              onChange={(e) => setQuantity(e.target.value)}
+              placeholder="0"
+              min="0"
+              step="1"
+              className="input"
+              required
+            />
           </div>
         </div>
 
@@ -183,7 +191,11 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
         )}
 
         <div className="flex space-x-3">
-          <button type="submit" className="btn btn-primary btn-lg">
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="btn btn-primary btn-lg"
+          >
             <PlusIcon className="w-4 h-4" />
             {editingProduct ? "Update Product" : "Add Product"}
           </button>
@@ -192,7 +204,7 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
             <button
               type="button"
               onClick={handleCancel}
-              className="btn btn-secondary btn-lg"
+              className="btn btn-ghost btn-lg"
             >
               Cancel
             </button>
