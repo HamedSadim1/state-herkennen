@@ -83,6 +83,7 @@ const Table: React.FC<TableProps> = ({ products: initialProducts }) => {
   return (
     <div className="space-y-8">
       <AddProductForm
+        key={editingProduct?.id ?? "new-product"}
         onAddProduct={handleAddProduct}
         editingProduct={editingProduct}
         onUpdateProduct={handleUpdateProduct}
