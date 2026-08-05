@@ -1,20 +1,6 @@
-// Single source of truth for the product categories: the runtime list drives
-// the type, so adding a category only touches this one place.
-export const CATEGORIES = [
-  "Smartphone",
-  "Tablet",
-  "Laptop",
-  "Audio",
-  "Accessories",
-] as const;
-
-export type Category = (typeof CATEGORIES)[number];
-
-// Default category for the add/edit form (kept as Smartphone to preserve the
-// existing behaviour) and fallback for imports with unknown values — two
-// distinct defaults, so they stay separate constants.
-export const DEFAULT_CATEGORY: Category = "Smartphone";
-export const FALLBACK_CATEGORY: Category = "Accessories";
+// The category list and the `Category` type derived from it live in
+// config/constants (single source of truth); only the type is imported here.
+import type { Category } from "../config/constants";
 
 export interface Product {
   id: string;

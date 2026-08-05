@@ -1,7 +1,7 @@
-import React, { useCallback, useRef, useState } from "react";
+import React, { useCallback } from "react";
 import { Product } from "../types/product";
-import { parseCsvToProducts } from "../utils/csv";
-import { pluralize } from "../utils/formatters";
+import { CSV_ACCEPT } from "../config/constants";
+import { useCsvImport } from "../hooks/useCsvImport";
 import { useConfirm } from "./confirm-context";
 import { useToast } from "./toast-context";
 import {
@@ -38,11 +38,16 @@ const TableToolbar: React.FC<TableToolbarProps> = ({
   onUndoImport,
   onResetData,
 }) => {
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [importError, setImportError] = useState<string | null>(null);
-  const [isImporting, setIsImporting] = useState(false);
   const confirm = useConfirm();
   const { notify } = useToast();
+
+  const {
+    fileInputRef,
+    importError,
+    isImporting,
+    handleImportButtonClick,
+    handleImportFile,
+  } = useCsvImport({ onImportProducts, onUndoImport });
 
   const handleResetData = useCallback(async () => {
     const confirmed = await confirm({
@@ -58,62 +63,6 @@ const TableToolbar: React.FC<TableToolbarProps> = ({
     }
   }, [confirm, onResetData, notify]);
 
-  const handleImportFile = useCallback(
-    async (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (!file || isImporting) return;
-
-      setIsImporting(true);
-      const reader = new FileReader();
-      reader.onload = async () => {
-        try {
-          const { products: importedProducts, warnings } = parseCsvToProducts(
-            String(reader.result)
-          );
-          const confirmed = await confirm({
-            title: "Replace inventory?",
-            message: `Import ${importedProducts.length} products? This will replace the current inventory.`,
-            confirmLabel: "Import",
-            variant: "primary",
-          });
-          if (confirmed) {
-            onImportProducts(importedProducts);
-            setImportError(null);
-            notify(
-              "success",
-              `${importedProducts.length} ${pluralize(
-                importedProducts.length,
-                "product"
-              )} imported.`,
-              { label: "Undo", onClick: onUndoImport }
-            );
-            if (warnings.length > 0) {
-              notify(
-                "info",
-                `${pluralize(warnings.length, "row")} had an unknown category and ${
-                  warnings.length === 1 ? "was" : "were"
-                } set to Accessories.`
-              );
-            }
-          }
-        } catch (error) {
-          setImportError(
-            error instanceof Error ? error.message : "Failed to import CSV."
-          );
-        } finally {
-          setIsImporting(false);
-        }
-      };
-      reader.onerror = () => {
-        setImportError("Failed to read the file.");
-        setIsImporting(false);
-      };
-      reader.readAsText(file);
-      e.target.value = "";
-    },
-    [onImportProducts, onUndoImport, confirm, notify, isImporting]
-  );
-
   return (
     <div className="px-6 py-4 border-b border-gray-100">
       <div className="flex flex-wrap justify-between items-center gap-4">
@@ -128,7 +77,7 @@ const TableToolbar: React.FC<TableToolbarProps> = ({
             <ArrowDownTrayIcon className="w-4 h-4" /> Export CSV ({exportCount})
           </button>
           <button
-            onClick={() => fileInputRef.current?.click()}
+            onClick={handleImportButtonClick}
             disabled={isImporting}
             className="btn btn-sm btn-ghost"
           >
@@ -156,7 +105,7 @@ const TableToolbar: React.FC<TableToolbarProps> = ({
             ref={fileInputRef}
             id="csv-import"
             type="file"
-            accept=".csv,text/csv"
+            accept={CSV_ACCEPT}
             onChange={handleImportFile}
             className="hidden"
           />

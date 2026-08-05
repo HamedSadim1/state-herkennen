@@ -1,6 +1,11 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { CheckCircleIcon, XCircleIcon, InfoIcon, XMarkIcon } from "./icons";
 import { ToastContext, ToastType, ToastAction } from "./toast-context";
+import {
+  TOAST_ACTION_DURATION,
+  TOAST_DURATION,
+  TOAST_EXIT_DURATION,
+} from "../config/constants";
 
 interface ToastItem {
   id: number;
@@ -8,11 +13,6 @@ interface ToastItem {
   message: string;
   action?: ToastAction;
 }
-
-const TOAST_DURATION = 4000;
-// Toasts with an action (e.g. Undo) stay longer so the user has time to act.
-const TOAST_ACTION_DURATION = 8000;
-const EXIT_DURATION = 200;
 
 const TOAST_STYLES: Record<
   ToastType,
@@ -49,7 +49,7 @@ const ToastCard: React.FC<{
     if (paused) return;
     const timer = window.setTimeout(
       () => setExiting(true),
-      duration - EXIT_DURATION
+      duration - TOAST_EXIT_DURATION
     );
     return () => window.clearTimeout(timer);
   }, [duration, paused]);
@@ -57,7 +57,7 @@ const ToastCard: React.FC<{
   // Wait for the exit animation before actually removing the toast.
   useEffect(() => {
     if (exiting) {
-      exitTimerRef.current = window.setTimeout(onClose, EXIT_DURATION);
+      exitTimerRef.current = window.setTimeout(onClose, TOAST_EXIT_DURATION);
     }
     return () => {
       if (exitTimerRef.current !== null) {

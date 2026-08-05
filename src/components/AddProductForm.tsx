@@ -1,16 +1,19 @@
 import React, { useState, useCallback } from "react";
+import { Product } from "../types/product";
 import {
-  Product,
-  Category,
   CATEGORIES,
+  CURRENCY_SYMBOL,
   DEFAULT_CATEGORY,
-} from "../types/product";
+  PRICE_CENTS,
+  type Category,
+} from "../config/constants";
 import { generateId } from "../utils/formatters";
 import {
   validateProductInput,
   ProductInputErrors,
 } from "../utils/productUtils";
 import { useToast } from "./toast-context";
+import FieldError from "./FieldError";
 import { PlusIcon } from "./icons";
 
 interface AddProductFormProps {
@@ -22,18 +25,6 @@ interface AddProductFormProps {
 
 // The form's error state is exactly what the shared validator returns.
 type FieldErrors = ProductInputErrors;
-
-// Renders a per-field validation message, wired to the field via its error id
-// (referenced by the input's aria-describedby). Renders nothing when valid.
-const FieldError: React.FC<{ id: string; message?: string }> = ({
-  id,
-  message,
-}) =>
-  message ? (
-    <p id={id} className="field-error" role="alert">
-      {message}
-    </p>
-  ) : null;
 
 const AddProductForm: React.FC<AddProductFormProps> = ({
   onAddProduct,
@@ -91,7 +82,7 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
       setFieldErrors({});
 
       // Round to cents so the stored value matches the displayed value.
-      const parsedPrice = Math.round(Number(price) * 100) / 100;
+      const parsedPrice = Math.round(Number(price) * PRICE_CENTS) / PRICE_CENTS;
       const parsedQuantity = Number(quantity);
 
       const productData: Product = {
@@ -189,7 +180,7 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
 
           <div>
             <label htmlFor="price" className="field-label">
-              Price ($)
+              Price ({CURRENCY_SYMBOL})
             </label>
             <input
               type="number"

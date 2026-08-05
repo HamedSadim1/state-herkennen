@@ -1,11 +1,16 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { TrashIcon, ExclamationTriangleIcon } from "./icons";
 import { ConfirmContext, ConfirmOptions } from "./confirm-context";
+import {
+  CONFIRM_DEFAULT_LABELS,
+  DEFAULT_CONFIRM_VARIANT,
+} from "../config/constants";
 
+// Fallback labels/variant come from the central constants file; per-call
+// options always win because they are spread last.
 const DEFAULT_OPTIONS = {
-  confirmLabel: "Confirm",
-  cancelLabel: "Cancel",
-  variant: "danger",
+  ...CONFIRM_DEFAULT_LABELS,
+  variant: DEFAULT_CONFIRM_VARIANT,
 };
 
 interface ConfirmDialogProps {

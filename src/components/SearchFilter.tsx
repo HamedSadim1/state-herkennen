@@ -1,15 +1,11 @@
 import React, { useCallback } from "react";
+import { FilterConfig, StockFilterType } from "../types/product";
 import {
-  FilterConfig,
-  Category,
-  StockFilterType,
   CATEGORIES,
-} from "../types/product";
-import {
   DEFAULT_FILTERS,
-  hasActiveFilters,
-  hasAnyStockFilter,
-} from "../utils/productUtils";
+  type Category,
+} from "../config/constants";
+import { hasActiveFilters, hasAnyStockFilter } from "../utils/productUtils";
 import { MagnifyingGlassIcon, XMarkIcon, ArrowPathIcon } from "./icons";
 
 interface SearchFilterProps {

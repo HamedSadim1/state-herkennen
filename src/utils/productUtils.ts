@@ -1,27 +1,11 @@
 import {
   Product,
   SortConfig,
-  SortField,
   FilterConfig,
   StockStatus,
   StockFilterType,
 } from "../types/product";
-
-export const LOW_STOCK_THRESHOLD = 5;
-
-// localStorage key shared by the persistence helpers and the cross-tab sync,
-// so the key only ever needs to change in one place.
-export const STORAGE_KEY = "products";
-
-// Single source of truth for the "no filters applied" state; shared by the
-// inventory state and the filter panel so they can never drift apart.
-export const DEFAULT_FILTERS: FilterConfig = {
-  searchTerm: "",
-  category: "all",
-  showInStockOnly: false,
-  showLowStockOnly: false,
-  showOutOfStockOnly: false,
-};
+import { LOW_STOCK_THRESHOLD, STORAGE_KEY } from "../config/constants";
 
 // --- Filter-state helpers (single source of truth for the panels) ---
 
@@ -41,19 +25,6 @@ export const getActiveStockFilter = (config: FilterConfig): StockFilterType => {
   if (config.showOutOfStockOnly) return "outOfStock";
   return "all";
 };
-
-// The sortable columns, shared by the toolbar buttons and the table headers
-// so both stay in sync.
-export const SORT_FIELDS: {
-  field: SortField;
-  sortLabel: string;
-  headerLabel: string;
-}[] = [
-  { field: "name", sortLabel: "Name", headerLabel: "Product Name" },
-  { field: "category", sortLabel: "Category", headerLabel: "Category" },
-  { field: "price", sortLabel: "Price", headerLabel: "Price" },
-  { field: "quantity", sortLabel: "Quantity", headerLabel: "Quantity" },
-];
 
 export const getStockStatus = (quantity: number): StockStatus => {
   if (quantity <= 0) return "outOfStock";

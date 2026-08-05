@@ -1,5 +1,6 @@
 import React from "react";
-import { getStockStatus, LOW_STOCK_THRESHOLD } from "../utils/productUtils";
+import { getStockStatus } from "../utils/productUtils";
+import { LOW_STOCK_THRESHOLD } from "../config/constants";
 
 interface StatusBadgeProps {
   quantity: number;

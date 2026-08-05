@@ -1,6 +1,7 @@
 import React, { useCallback } from "react";
 import { SortConfig, SortField } from "../types/product";
-import { getNextSortConfig, SORT_FIELDS } from "../utils/productUtils";
+import { getNextSortConfig } from "../utils/productUtils";
+import { SORT_FIELDS } from "../config/constants";
 import SortIndicator from "./SortIndicator";
 import { ChevronUpIcon, ChevronDownIcon } from "./icons";
 

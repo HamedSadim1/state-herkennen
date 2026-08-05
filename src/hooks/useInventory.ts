@@ -18,11 +18,14 @@ import {
   saveProductsToStorage,
   loadProductsFromStorage,
   LoadProductsResult,
-  DEFAULT_FILTERS,
-  STORAGE_KEY,
   hasActiveFilters,
   getActiveStockFilter,
 } from "../utils/productUtils";
+import {
+  DEFAULT_FILTERS,
+  DEFAULT_SORT,
+  STORAGE_KEY,
+} from "../config/constants";
 import { generateId } from "../utils/formatters";
 import { useToast } from "../components/toast-context";
 
@@ -59,10 +62,7 @@ export const useInventory = (initialProducts: Product[]) => {
   );
 
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-  const [sortConfig, setSortConfig] = useState<SortConfig>({
-    field: "name",
-    direction: "asc",
-  });
+  const [sortConfig, setSortConfig] = useState<SortConfig>(DEFAULT_SORT);
   const [filterConfig, setFilterConfig] =
     useState<FilterConfig>(DEFAULT_FILTERS);
 

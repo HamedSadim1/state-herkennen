@@ -1,8 +1,12 @@
 import React, { useCallback } from "react";
-import { Product, Category, FALLBACK_CATEGORY } from "../types/product";
+import { Product } from "../types/product";
+import {
+  FALLBACK_CATEGORY,
+  LOW_STOCK_THRESHOLD,
+  type Category,
+} from "../config/constants";
 import StatusBadge from "./StatusBadge";
 import { formatPrice } from "../utils/formatters";
-import { LOW_STOCK_THRESHOLD } from "../utils/productUtils";
 import { useConfirm } from "./confirm-context";
 import { useToast } from "./toast-context";
 import { PencilIcon, TrashIcon } from "./icons";

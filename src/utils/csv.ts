@@ -1,16 +1,14 @@
+import { Product } from "../types/product";
 import {
-  Product,
-  Category,
   CATEGORIES,
+  CSV_DOWNLOAD_FILENAME,
+  CSV_HEADERS,
+  CSV_MIME_TYPE,
   FALLBACK_CATEGORY,
-} from "../types/product";
+  MAX_CSV_ROWS,
+  type Category,
+} from "../config/constants";
 import { generateId } from "./formatters";
-
-const CSV_HEADERS = ["id", "name", "category", "price", "quantity"] as const;
-
-// Parsing runs synchronously on the main thread, so cap the row count to keep
-// the UI responsive (and the resulting DOM renderable) on very large files.
-const MAX_CSV_ROWS = 10000;
 
 export const escapeCsvCell = (value: string | number): string => {
   const stringValue = String(value);
@@ -37,11 +35,11 @@ export const exportProductsToCsv = (products: Product[]): void => {
     .map((row) => row.map(escapeCsvCell).join(","))
     .join("\n");
 
-  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const blob = new Blob([csv], { type: CSV_MIME_TYPE });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
-  link.download = "products-inventory.csv";
+  link.download = CSV_DOWNLOAD_FILENAME;
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
@@ -147,7 +145,7 @@ export const parseCsvToProducts = (csvText: string): ParseCsvResult => {
     const isKnownCategory = CATEGORIES.includes(category as Category);
     if (!isKnownCategory) {
       warnings.push(
-        `Row ${index + 1} ("${name}"): unknown category "${category || "—"}" — set to Accessories.`
+        `Row ${index + 1} ("${name}"): unknown category "${category || "—"}" — set to ${FALLBACK_CATEGORY}.`
       );
     }
 
