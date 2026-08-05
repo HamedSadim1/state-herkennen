@@ -19,7 +19,10 @@
 
   /* --- Buttons --- */
   .btn {
-    @apply inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium rounded-lg transition-all duration-200 active:scale-95 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2;
+    /* will-change-transform: the active:scale-95 press animates on its own
+       composited layer, so Chrome no longer repaints neighboring borders/
+       shadows each frame (previously a 1px line flickered when sorting). */
+    @apply inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium rounded-lg transition-all duration-200 active:scale-95 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 will-change-transform;
   }
   .btn-primary {
     @apply bg-blue-600 text-white hover:bg-blue-700 hover:shadow-md shadow-sm focus-visible:ring-blue-500;
