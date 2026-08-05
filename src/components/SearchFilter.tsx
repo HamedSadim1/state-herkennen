@@ -1,6 +1,10 @@
 import React, { useCallback } from "react";
-import { FilterConfig, Category, StockFilterType } from "../types/product";
-import { CATEGORIES } from "../model/data";
+import {
+  FilterConfig,
+  Category,
+  StockFilterType,
+  CATEGORIES,
+} from "../types/product";
 import {
   DEFAULT_FILTERS,
   hasActiveFilters,

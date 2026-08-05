@@ -1,12 +1,4 @@
-import { Product, Category } from "../types/product";
-
-export const CATEGORIES: Category[] = [
-  "Smartphone",
-  "Tablet",
-  "Laptop",
-  "Audio",
-  "Accessories",
-];
+import { Product } from "../types/product";
 
 const Data: Product[] = [
   {
@@ -81,7 +73,7 @@ const Data: Product[] = [
   },
   {
     id: "11",
-    name: "iPad Pro 11\"",
+    name: 'iPad Pro 11"',
     price: 899,
     quantity: 0,
     category: "Tablet",
@@ -102,7 +94,7 @@ const Data: Product[] = [
   },
   {
     id: "14",
-    name: "MacBook Pro 14\"",
+    name: 'MacBook Pro 14"',
     price: 1999,
     quantity: 2,
     category: "Laptop",

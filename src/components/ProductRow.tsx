@@ -1,5 +1,5 @@
 import React, { useCallback } from "react";
-import { Product } from "../types/product";
+import { Product, Category, FALLBACK_CATEGORY } from "../types/product";
 import StatusBadge from "./StatusBadge";
 import { formatPrice } from "../utils/formatters";
 import { LOW_STOCK_THRESHOLD } from "../utils/productUtils";
@@ -14,7 +14,10 @@ interface ProductRowProps {
   onUndoDelete: (productId: string) => void;
 }
 
-const CATEGORY_COLORS: Record<string, string> = {
+// Keyed by Category so TypeScript fails the build when a new category is
+// added without a color. The fallback protects against legacy stored data
+// whose category no longer matches the current list.
+const CATEGORY_COLORS: Record<Category, string> = {
   Smartphone: "chip-blue",
   Tablet: "chip-purple",
   Laptop: "chip-indigo",
@@ -61,7 +64,8 @@ const ProductRow: React.FC<ProductRowProps> = ({
       <td className="px-6 py-4 whitespace-nowrap text-sm">
         <span
           className={`chip ${
-            CATEGORY_COLORS[product.category] ?? CATEGORY_COLORS.Accessories
+            CATEGORY_COLORS[product.category] ??
+            CATEGORY_COLORS[FALLBACK_CATEGORY]
           }`}
         >
           {product.category}

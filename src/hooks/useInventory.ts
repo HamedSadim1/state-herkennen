@@ -19,6 +19,7 @@ import {
   loadProductsFromStorage,
   LoadProductsResult,
   DEFAULT_FILTERS,
+  STORAGE_KEY,
   hasActiveFilters,
   getActiveStockFilter,
 } from "../utils/productUtils";
@@ -102,7 +103,7 @@ export const useInventory = (initialProducts: Product[]) => {
   // its list and discard undo memories that now point at a stale list.
   useEffect(() => {
     const handleStorage = (event: StorageEvent) => {
-      if (event.key !== "products") return;
+      if (event.key !== STORAGE_KEY) return;
       setProductList(loadProductsFromStorage().products);
       setEditingProduct(null);
       previousProductsRef.current = [];

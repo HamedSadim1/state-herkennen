@@ -1,8 +1,15 @@
 import React, { useState, useCallback } from "react";
-import { Product, Category } from "../types/product";
+import {
+  Product,
+  Category,
+  CATEGORIES,
+  DEFAULT_CATEGORY,
+} from "../types/product";
 import { generateId } from "../utils/formatters";
-import { CATEGORIES } from "../model/data";
-import { validateProductInput } from "../utils/productUtils";
+import {
+  validateProductInput,
+  ProductInputErrors,
+} from "../utils/productUtils";
 import { useToast } from "./toast-context";
 import { PlusIcon } from "./icons";
 
@@ -13,11 +20,8 @@ interface AddProductFormProps {
   onCancelEdit?: () => void;
 }
 
-interface FieldErrors {
-  name?: string;
-  price?: string;
-  quantity?: string;
-}
+// The form's error state is exactly what the shared validator returns.
+type FieldErrors = ProductInputErrors;
 
 // Renders a per-field validation message, wired to the field via its error id
 // (referenced by the input's aria-describedby). Renders nothing when valid.
@@ -47,7 +51,7 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
     editingProduct ? editingProduct.quantity.toString() : ""
   );
   const [category, setCategory] = useState<Category>(
-    editingProduct?.category ?? "Smartphone"
+    editingProduct?.category ?? DEFAULT_CATEGORY
   );
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -63,7 +67,7 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
     setProductName("");
     setPrice("");
     setQuantity("");
-    setCategory("Smartphone");
+    setCategory(DEFAULT_CATEGORY);
     setFieldErrors({});
   }, []);
 

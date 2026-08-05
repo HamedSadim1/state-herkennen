@@ -1,20 +1,14 @@
-import React, { useRef, useCallback, useState } from "react";
+import React, { useCallback } from "react";
 import { Product, SortConfig, SortField } from "../types/product";
 import ProductRow from "./ProductRow";
 import SortControls from "./SortControls";
-import { exportProductsToCsv, parseCsvToProducts } from "../utils/csv";
+import TableToolbar from "./TableToolbar";
+import EmptyState from "./EmptyState";
+import { exportProductsToCsv } from "../utils/csv";
 import { getNextSortConfig, SORT_FIELDS } from "../utils/productUtils";
 import { pluralize } from "../utils/formatters";
-import { useConfirm } from "./confirm-context";
 import { useToast } from "./toast-context";
 import SortIndicator from "./SortIndicator";
-import {
-  ArrowDownTrayIcon,
-  ArrowUpTrayIcon,
-  MagnifyingGlassIcon,
-  SpinnerIcon,
-  ArrowPathIcon,
-} from "./icons";
 
 const HEADERS: { label: string; field?: SortField }[] = [
   // Sortable columns come from the shared SORT_FIELDS config so the toolbar
@@ -56,10 +50,6 @@ const ProductTable: React.FC<ProductTableProps> = ({
   onResetData,
   onUndoDelete,
 }) => {
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [importError, setImportError] = useState<string | null>(null);
-  const [isImporting, setIsImporting] = useState(false);
-  const confirm = useConfirm();
   const { notify } = useToast();
 
   const handleExport = useCallback(() => {
@@ -67,75 +57,6 @@ const ProductTable: React.FC<ProductTableProps> = ({
     notify("info", "Inventory exported to CSV.");
   }, [products, notify]);
 
-  const handleResetData = useCallback(async () => {
-    const confirmed = await confirm({
-      title: "Reset inventory?",
-      message:
-        "This replaces the current inventory with the original sample data. This action cannot be undone.",
-      confirmLabel: "Reset",
-      variant: "danger",
-    });
-    if (confirmed) {
-      onResetData();
-      notify("info", "Inventory reset to the original sample data.");
-    }
-  }, [confirm, onResetData, notify]);
-
-  const handleImportFile = useCallback(
-    async (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (!file || isImporting) return;
-
-      setIsImporting(true);
-      const reader = new FileReader();
-      reader.onload = async () => {
-        try {
-          const { products: importedProducts, warnings } = parseCsvToProducts(
-            String(reader.result)
-          );
-          const confirmed = await confirm({
-            title: "Replace inventory?",
-            message: `Import ${importedProducts.length} products? This will replace the current inventory.`,
-            confirmLabel: "Import",
-            variant: "primary",
-          });
-          if (confirmed) {
-            onImportProducts(importedProducts);
-            setImportError(null);
-            notify(
-              "success",
-              `${importedProducts.length} ${pluralize(
-                importedProducts.length,
-                "product"
-              )} imported.`,
-              { label: "Undo", onClick: onUndoImport }
-            );
-            if (warnings.length > 0) {
-              notify(
-                "info",
-                `${pluralize(warnings.length, "row")} had an unknown category and ${
-                  warnings.length === 1 ? "was" : "were"
-                } set to Accessories.`
-              );
-            }
-          }
-        } catch (error) {
-          setImportError(
-            error instanceof Error ? error.message : "Failed to import CSV."
-          );
-        } finally {
-          setIsImporting(false);
-        }
-      };
-      reader.onerror = () => {
-        setImportError("Failed to read the file.");
-        setIsImporting(false);
-      };
-      reader.readAsText(file);
-      e.target.value = "";
-    },
-    [onImportProducts, onUndoImport, confirm, notify, isImporting]
-  );
   const productNoun = pluralize(totalProducts, "product");
 
   const shownLabel =
@@ -143,69 +64,28 @@ const ProductTable: React.FC<ProductTableProps> = ({
       ? `${totalProducts} ${productNoun} shown`
       : `Showing ${products.length} of ${totalProducts} ${productNoun}`;
 
+  const titleBlock = (
+    <div>
+      <h2 className="text-2xl font-bold text-gray-900">Product Inventory</h2>
+      <p aria-live="polite" className="text-sm text-gray-600 mt-0.5">
+        {shownLabel}
+      </p>
+    </div>
+  );
+
   return (
     <div className="card overflow-clip">
-      <div className="px-6 py-4 border-b border-gray-100">
-        <div className="flex flex-wrap justify-between items-center gap-4">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900">
-              Product Inventory
-            </h2>
-            <p aria-live="polite" className="text-sm text-gray-600 mt-0.5">
-              {shownLabel}
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-            <SortControls sortConfig={sortConfig} onSortChange={onSortChange} />
-            <button
-              onClick={handleExport}
-              title="Exports the currently visible products"
-              className="btn btn-sm btn-ghost"
-            >
-              <ArrowDownTrayIcon className="w-4 h-4" /> Export CSV (
-              {products.length})
-            </button>
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              disabled={isImporting}
-              className="btn btn-sm btn-ghost"
-            >
-              {isImporting ? (
-                <>
-                  <SpinnerIcon className="w-4 h-4 animate-spin" /> Importing…
-                </>
-              ) : (
-                <>
-                  <ArrowUpTrayIcon className="w-4 h-4" /> Import CSV
-                </>
-              )}
-            </button>
-            <button
-              onClick={handleResetData}
-              title="Restore the original sample data"
-              className="btn btn-sm btn-soft-danger"
-            >
-              <ArrowPathIcon className="w-3.5 h-3.5" /> Reset data
-            </button>
-            <label className="sr-only" htmlFor="csv-import">
-              Import products from CSV
-            </label>
-            <input
-              ref={fileInputRef}
-              id="csv-import"
-              type="file"
-              accept=".csv,text/csv"
-              onChange={handleImportFile}
-              className="hidden"
-            />
-          </div>
-        </div>
-        {importError && (
-          <p className="alert-error mt-3" role="alert">
-            {importError}
-          </p>
-        )}
-      </div>
+      <TableToolbar
+        title={titleBlock}
+        actions={
+          <SortControls sortConfig={sortConfig} onSortChange={onSortChange} />
+        }
+        exportCount={products.length}
+        onExport={handleExport}
+        onImportProducts={onImportProducts}
+        onUndoImport={onUndoImport}
+        onResetData={onResetData}
+      />
 
       <div className="overflow-x-auto overflow-y-clip">
         <table className="min-w-full divide-y divide-gray-200">
@@ -282,40 +162,10 @@ const ProductTable: React.FC<ProductTableProps> = ({
       </div>
 
       {products.length === 0 && (
-        <div className="text-center py-16">
-          <div
-            className="w-14 h-14 mx-auto mb-3 rounded-full bg-gray-100 flex items-center justify-center text-gray-400"
-            aria-hidden="true"
-          >
-            <MagnifyingGlassIcon className="w-7 h-7" />
-          </div>
-          {filtersActive ? (
-            <>
-              <p className="text-gray-600 text-lg font-medium">
-                No products found.
-              </p>
-              <p className="text-gray-600 text-sm mt-1">
-                Try adjusting your search, category or filter criteria.
-              </p>
-              <button
-                type="button"
-                onClick={onClearFilters}
-                className="btn btn-sm btn-soft-danger mt-4"
-              >
-                <ArrowPathIcon className="w-3.5 h-3.5" /> Clear all filters
-              </button>
-            </>
-          ) : (
-            <>
-              <p className="text-gray-600 text-lg font-medium">
-                No products yet.
-              </p>
-              <p className="text-gray-600 text-sm mt-1">
-                Add your first product using the form above.
-              </p>
-            </>
-          )}
-        </div>
+        <EmptyState
+          filtersActive={filtersActive}
+          onClearFilters={onClearFilters}
+        />
       )}
     </div>
   );

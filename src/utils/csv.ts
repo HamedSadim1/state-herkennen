@@ -1,6 +1,10 @@
-import { Product, Category } from "../types/product";
+import {
+  Product,
+  Category,
+  CATEGORIES,
+  FALLBACK_CATEGORY,
+} from "../types/product";
 import { generateId } from "./formatters";
-import { CATEGORIES } from "../model/data";
 
 const CSV_HEADERS = ["id", "name", "category", "price", "quantity"] as const;
 
@@ -91,7 +95,8 @@ export const parseCsvToProducts = (csvText: string): ParseCsvResult => {
   // Skip the header row when the first line looks like a header: at least two
   // cells match a known column name. A plain data row can't satisfy this,
   // which also covers CSVs whose header doesn't start with id/name.
-  const HEADER_CELLS = new Set(["id", "name", "category", "price", "quantity"]);
+  // Derived from the same columns used for export, so both always agree.
+  const HEADER_CELLS = new Set<string>(CSV_HEADERS);
   const firstRowCells = parseCsvRow(lines[0]).map((cell) =>
     cell.toLowerCase().trim()
   );
@@ -149,7 +154,7 @@ export const parseCsvToProducts = (csvText: string): ParseCsvResult => {
     return {
       id: generateId(),
       name,
-      category: isKnownCategory ? (category as Category) : "Accessories",
+      category: isKnownCategory ? (category as Category) : FALLBACK_CATEGORY,
       price: parsedPrice,
       quantity: parsedQuantity,
     };

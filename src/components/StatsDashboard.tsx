@@ -9,6 +9,7 @@ import {
   XCircleIcon,
   BanknotesIcon,
 } from "./icons";
+import StatCard from "./StatCard";
 
 interface StatsDashboardProps {
   products: Product[];
@@ -18,72 +19,6 @@ interface StatsDashboardProps {
   hasAnyFilter: boolean;
   onFilterByStock: (type: StockFilterType) => void;
 }
-
-interface StatCardProps {
-  label: string;
-  value: string;
-  icon: React.ReactNode;
-  accent: string;
-  iconBg: string;
-  alignEnd?: boolean;
-  onClick?: () => void;
-  active?: boolean;
-  activeRing?: string;
-  className?: string;
-}
-
-const StatCard: React.FC<StatCardProps> = ({
-  label,
-  value,
-  icon,
-  accent,
-  iconBg,
-  alignEnd = false,
-  onClick,
-  active = false,
-  activeRing = "",
-  className = "",
-}) => {
-  const content = (
-    <>
-      <div
-        className={`w-12 h-12 rounded-xl flex items-center justify-center ${iconBg}`}
-        aria-hidden="true"
-      >
-        {icon}
-      </div>
-      <div className={`min-w-0 ${alignEnd ? "sm:text-right" : ""}`}>
-        <p className="text-xs font-medium uppercase tracking-wide text-gray-600">
-          {label}
-        </p>
-        <p className={`text-2xl font-bold tabular-nums ${accent} truncate`}>
-          {value}
-        </p>
-      </div>
-    </>
-  );
-
-  const baseClass = `card p-5 flex items-center gap-4 transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 ${className} ${
-    alignEnd ? "sm:justify-between" : ""
-  }`;
-
-  if (onClick) {
-    return (
-      <button
-        type="button"
-        onClick={onClick}
-        aria-pressed={active}
-        className={`${baseClass} w-full text-left cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${
-          active ? `ring-2 ring-offset-2 ${activeRing}` : ""
-        }`}
-      >
-        {content}
-      </button>
-    );
-  }
-
-  return <div className={baseClass}>{content}</div>;
-};
 
 const StatsDashboard: React.FC<StatsDashboardProps> = ({
   products,

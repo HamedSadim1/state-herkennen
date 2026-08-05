@@ -9,6 +9,10 @@ import {
 
 export const LOW_STOCK_THRESHOLD = 5;
 
+// localStorage key shared by the persistence helpers and the cross-tab sync,
+// so the key only ever needs to change in one place.
+export const STORAGE_KEY = "products";
+
 // Single source of truth for the "no filters applied" state; shared by the
 // inventory state and the filter panel so they can never drift apart.
 export const DEFAULT_FILTERS: FilterConfig = {
@@ -121,12 +125,18 @@ export const filterProducts = (
 // Validates the raw form field strings and returns per-field error messages.
 // An empty object means the input is valid. Kept as a pure function so the
 // form logic is testable without rendering.
+export interface ProductInputErrors {
+  name?: string;
+  price?: string;
+  quantity?: string;
+}
+
 export const validateProductInput = (input: {
   name: string;
   price: string;
   quantity: string;
-}): { name?: string; price?: string; quantity?: string } => {
-  const errors: { name?: string; price?: string; quantity?: string } = {};
+}): ProductInputErrors => {
+  const errors: ProductInputErrors = {};
 
   if (input.name.trim() === "") {
     errors.name = "Product name is required.";
@@ -153,7 +163,7 @@ export const validateProductInput = (input: {
 // can surface the problem instead of silently losing changes.
 export const saveProductsToStorage = (products: Product[]): boolean => {
   try {
-    localStorage.setItem("products", JSON.stringify(products));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(products));
     return true;
   } catch (error) {
     console.error("Failed to save products to localStorage:", error);
@@ -183,7 +193,7 @@ export interface LoadProductsResult {
 
 export const loadProductsFromStorage = (): LoadProductsResult => {
   try {
-    const stored = localStorage.getItem("products");
+    const stored = localStorage.getItem(STORAGE_KEY);
     if (!stored) return { products: [], hadCorruptData: false };
 
     const parsed: unknown = JSON.parse(stored);
