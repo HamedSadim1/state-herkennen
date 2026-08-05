@@ -89,54 +89,75 @@ A modern, responsive React application for managing product inventory with advan
 | `npm run preview` | Preview production build locally         |
 | `npm run lint`    | Run ESLint                               |
 | `npm run format`  | Format all files with Prettier           |
+| `npm test`        | Run the Vitest unit test suite           |
 
 ## 🏗️ Project Structure
 
 ```text
 src/
-├── components/            # Reusable UI components
-│   ├── AddProductForm.tsx # Product creation/editing form
-│   ├── ConfirmDialog.tsx  # Promise-based confirmation modal
-│   ├── confirm-context.ts # useConfirm hook + context
-│   ├── icons.tsx          # Inline SVG icon set
-│   ├── ProductRow.tsx     # Individual product row
-│   ├── ProductTable.tsx   # Product table (sortable headers, CSV tools)
-│   ├── SearchFilter.tsx   # Search, category & stock filters
-│   ├── SortControls.tsx   # Sort toolbar buttons
-│   ├── SortIndicator.tsx  # Shared sort-state arrow icon
-│   ├── StatsDashboard.tsx # Inventory statistics cards
-│   ├── StatusBadge.tsx    # Stock status chip
-│   ├── Table.tsx          # Main container (state orchestration)
-│   ├── Toast.tsx          # Toast notification system
-│   └── toast-context.ts   # useToast hook + context
-├── types/                 # TypeScript type definitions
-│   └── product.ts         # Product and configuration types
-├── utils/                 # Utility functions
-│   ├── csv.ts             # CSV export/import (with warnings)
-│   ├── formatters.ts      # Data formatting helpers
-│   └── productUtils.ts    # Sorting, filtering, storage helpers
-├── model/                 # Data models
-│   └── data.ts            # Initial product data
-└── App.tsx                # Main application component
+├── components/             # Reusable UI components
+│   ├── AddProductForm.tsx  # Product creation/editing form
+│   ├── ConfirmDialog.tsx   # Promise-based confirmation modal
+│   ├── confirm-context.ts  # useConfirm hook + context
+│   ├── EmptyState.tsx      # Empty-table state (with clear-filters CTA)
+│   ├── ErrorBoundary.tsx   # Error boundary with fallback + retry
+│   ├── FieldError.tsx      # Reusable per-field validation message
+│   ├── icons.tsx           # Inline SVG icon set
+│   ├── ProductRow.tsx      # Individual product row
+│   ├── ProductTable.tsx    # Product table (sortable headers, rows)
+│   ├── SearchFilter.tsx    # Search, category & stock filters
+│   ├── SortControls.tsx    # Sort controls (buttons on desktop, select on mobile)
+│   ├── SortIndicator.tsx   # Shared sort-state arrow icon
+│   ├── StatCard.tsx        # Dashboard stat card (clickable filter shortcut)
+│   ├── StatsDashboard.tsx  # Inventory statistics cards
+│   ├── StatusBadge.tsx     # Stock status chip
+│   ├── Table.tsx           # Main container (wires useInventory to the UI)
+│   ├── TableToolbar.tsx    # Export / import / reset toolbar
+│   ├── Toast.tsx           # Toast notification system
+│   └── toast-context.ts    # useToast hook + context
+├── config/
+│   └── constants.ts        # 🔑 Single source of truth for all constants
+├── hooks/                  # Custom hooks (state + side-effect orchestration)
+│   ├── useCsvImport.ts     # CSV import flow (parse → confirm → toasts)
+│   └── useInventory.ts     # Inventory state machine (list, sort, filter, undo)
+├── model/
+│   └── data.ts             # Initial product data
+├── types/
+│   └── product.ts          # Product and configuration types
+├── utils/                  # Pure, unit-tested utility functions
+│   ├── cn.ts               # Class merge helper (clsx + tailwind-merge)
+│   ├── csv.ts              # CSV export/import (with warnings)
+│   ├── formatters.ts       # Data formatting helpers (price, pluralize, ids)
+│   └── productUtils.ts     # Sorting, filtering, storage helpers
+├── App.tsx                 # Main application component
+├── index.tsx               # Application entry point
+└── index.css               # Design system (tokens, component classes)
 ```
+
+> **Import alias:** all modules import through the `@/` alias (`@/config/constants`, `@/hooks/useInventory`, …), which resolves to `src/`. Relative parent imports (`../`) are rejected by ESLint.
 
 ## 🛠️ Technology Stack
 
 - **Frontend Framework**: React 19 with TypeScript
-- **Build Tool**: Vite 8
+- **Build Tool**: Vite 8 (with `@/` → `src` alias)
 - **Styling**: Tailwind CSS 4
-- **State Management**: React Hooks (useState, useCallback, useEffect) + Context
+- **Class Utilities**: `cn()` helper (`clsx` + `tailwind-merge`)
+- **State Management**: React Hooks (useState, useCallback, useEffect, useDeferredValue) + Context
 - **Data Storage**: Browser Local Storage
 - **Icons**: Inline SVG components (no external icon libraries)
+- **Testing**: Vitest (31 unit tests covering the pure logic)
 
 ## 🎯 Key Concepts Demonstrated
 
 ### DRY Principles Implementation
 
-- **Reusable Components**: modular, single-responsibility components
-- **Utility Functions**: centralized data operations and formatting (`productUtils`, `formatters`, `csv`)
+- **Central Constants File**: every hardcoded value (categories, thresholds, durations, CSV config, defaults) lives in `config/constants.ts` and is imported from there
+- **Reusable Components**: single-responsibility building blocks (`TableToolbar`, `EmptyState`, `StatCard`, `FieldError`, `ErrorBoundary`)
+- **Custom Hooks**: `useInventory` owns the whole state machine; `useCsvImport` encapsulates the CSV import flow so any form can reuse it
+- **Utility Functions**: centralized, unit-tested data operations (`productUtils`, `formatters`, `csv`, `cn`)
 - **Shared Design Tokens**: button/chip/input classes in `index.css`
 - **Shared UI Primitives**: `SortIndicator`, `useToast`, `useConfirm` reused across components
+- **Enforced Conventions**: ESLint rejects `../` imports (use `@/`) and all class names merge through `cn()`
 
 ### React Best Practices
 
