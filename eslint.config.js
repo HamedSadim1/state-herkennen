@@ -5,6 +5,8 @@ import reactRefresh from "eslint-plugin-react-refresh";
 import tseslint from "typescript-eslint";
 
 export default tseslint.config(
+  // Root config files (eslint.config.js, commitlint.config.js) are intentionally
+  // not linted; linting is scoped to the TypeScript/React source in src/.
   { ignores: ["dist"] },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
