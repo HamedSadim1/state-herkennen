@@ -98,12 +98,15 @@ export const loadProductsFromStorage = (): Product[] => {
     if (!Array.isArray(parsed)) return [];
 
     // Validate the stored data matches the current Product shape. If it was
-    // saved by an older version of the app (e.g. no quantity/category), fall
-    // back to the seed data instead of rendering broken values.
+    // saved by an older version of the app or corrupted, fall back to the seed
+    // data instead of rendering broken values (empty names, "$NaN" prices).
     const isValidShape = parsed.every(
       (product) =>
         product !== null &&
         typeof product === "object" &&
+        typeof (product as Product).name === "string" &&
+        (product as Product).name.trim().length > 0 &&
+        typeof (product as Product).price === "number" &&
         typeof (product as Product).quantity === "number" &&
         typeof (product as Product).category === "string"
     );

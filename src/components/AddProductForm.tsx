@@ -62,7 +62,10 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
 
       const trimmedName = productName.trim();
       const parsedPrice = parseFloat(price);
-      const parsedQuantity = parseInt(quantity, 10);
+      // Number() instead of parseInt: parseInt silently truncates decimals
+      // (5.9 becomes 5), which would store wrong data without any feedback now
+      // that native validation is disabled via noValidate.
+      const parsedQuantity = Number(quantity);
 
       const errors: FieldErrors = {};
       if (!trimmedName) {
@@ -71,8 +74,12 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
       if (Number.isNaN(parsedPrice) || parsedPrice < 0) {
         errors.price = "Enter a valid price of 0 or more.";
       }
-      if (Number.isNaN(parsedQuantity) || parsedQuantity < 0) {
-        errors.quantity = "Enter a valid quantity of 0 or more.";
+      if (
+        Number.isNaN(parsedQuantity) ||
+        !Number.isInteger(parsedQuantity) ||
+        parsedQuantity < 0
+      ) {
+        errors.quantity = "Enter a whole quantity of 0 or more.";
       }
       if (Object.keys(errors).length > 0) {
         setFieldErrors(errors);

@@ -104,6 +104,9 @@ const Table: React.FC<TableProps> = ({ products: initialProducts }) => {
         lastDeletedRef.current = { product, index };
       }
       setProductList((prev) => prev.filter((p) => p.id !== productId));
+      // Deleting a product that is currently being edited would leave the form
+      // in a "ghost edit" (Update silently does nothing) — clear it.
+      setEditingProduct((prev) => (prev?.id === productId ? null : prev));
     },
     [productList]
   );

@@ -97,7 +97,10 @@ export const parseCsvToProducts = (csvText: string): ParseCsvResult => {
   const products: Product[] = dataLines.map((line, index) => {
     const cells = parseCsvRow(line);
 
-    const [id, name, category, price, quantity] = cells;
+    // The id column is ignored: ids from an edited/duplicated CSV could collide,
+    // which would break React keys and storage lookups. Fresh ids guarantee
+    // uniqueness for every imported row.
+    const [, name, category, price, quantity] = cells;
 
     if (!name) {
       throw new Error(`Invalid row on line ${index + 1}: name is missing.`);
@@ -125,7 +128,7 @@ export const parseCsvToProducts = (csvText: string): ParseCsvResult => {
     }
 
     return {
-      id: id || generateId(),
+      id: generateId(),
       name,
       category: isKnownCategory ? (category as Category) : "Accessories",
       price: parsedPrice,
