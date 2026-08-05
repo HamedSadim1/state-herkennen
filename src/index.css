@@ -162,6 +162,10 @@
 
 html {
   scroll-behavior: smooth;
+  /* Reserve space for a classic scrollbar so locking body scroll while the
+     confirm dialog is open (ConfirmDialog) doesn't shift the layout sideways
+     when the scrollbar disappears. */
+  scrollbar-gutter: stable;
 }
 
 body {
