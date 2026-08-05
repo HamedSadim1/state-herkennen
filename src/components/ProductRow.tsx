@@ -11,6 +11,7 @@ interface ProductRowProps {
   product: Product;
   onEdit: (product: Product) => void;
   onDelete: (productId: string) => void;
+  onUndoDelete: () => void;
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -25,6 +26,7 @@ const ProductRow: React.FC<ProductRowProps> = ({
   product,
   onEdit,
   onDelete,
+  onUndoDelete,
 }) => {
   const confirm = useConfirm();
   const { notify } = useToast();
@@ -42,9 +44,12 @@ const ProductRow: React.FC<ProductRowProps> = ({
     });
     if (confirmed) {
       onDelete(product.id);
-      notify("success", `"${product.name}" was deleted.`);
+      notify("success", `"${product.name}" was deleted.`, {
+        label: "Undo",
+        onClick: onUndoDelete,
+      });
     }
-  }, [product, confirm, notify, onDelete]);
+  }, [product, confirm, notify, onDelete, onUndoDelete]);
 
   return (
     <tr className="hover:bg-gray-50 transition-colors duration-150 group">

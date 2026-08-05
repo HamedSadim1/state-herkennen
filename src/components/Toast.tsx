@@ -1,14 +1,17 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { CheckCircleIcon, XCircleIcon, InfoIcon, XMarkIcon } from "./icons";
-import { ToastContext, ToastType } from "./toast-context";
+import { ToastContext, ToastType, ToastAction } from "./toast-context";
 
 interface ToastItem {
   id: number;
   type: ToastType;
   message: string;
+  action?: ToastAction;
 }
 
 const TOAST_DURATION = 4000;
+// Toasts with an action (e.g. Undo) stay longer so the user has time to act.
+const TOAST_ACTION_DURATION = 8000;
 const EXIT_DURATION = 200;
 
 const TOAST_STYLES: Record<
@@ -36,14 +39,16 @@ const ToastCard: React.FC<{
   const [exiting, setExiting] = useState(false);
   const exitTimerRef = useRef<number | null>(null);
 
+  const duration = toast.action ? TOAST_ACTION_DURATION : TOAST_DURATION;
+
   // Auto-dismiss: start the exit animation just before the toast expires.
   useEffect(() => {
     const timer = window.setTimeout(
       () => setExiting(true),
-      TOAST_DURATION - EXIT_DURATION
+      duration - EXIT_DURATION
     );
     return () => window.clearTimeout(timer);
-  }, []);
+  }, [duration]);
 
   // Wait for the exit animation before actually removing the toast.
   useEffect(() => {
@@ -70,6 +75,18 @@ const ToastCard: React.FC<{
       <p className="flex-1 text-sm font-medium text-gray-800 pt-0.5">
         {toast.message}
       </p>
+      {toast.action && (
+        <button
+          type="button"
+          onClick={() => {
+            toast.action?.onClick();
+            setExiting(true);
+          }}
+          className="btn btn-xs btn-soft-primary whitespace-nowrap"
+        >
+          {toast.action.label}
+        </button>
+      )}
       <button
         type="button"
         onClick={() => setExiting(true)}
@@ -92,10 +109,13 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({
     setToasts((prev) => prev.filter((toast) => toast.id !== id));
   }, []);
 
-  const notify = useCallback((type: ToastType, message: string) => {
-    const id = nextIdRef.current++;
-    setToasts((prev) => [...prev, { id, type, message }]);
-  }, []);
+  const notify = useCallback(
+    (type: ToastType, message: string, action?: ToastAction) => {
+      const id = nextIdRef.current++;
+      setToasts((prev) => [...prev, { id, type, message, action }]);
+    },
+    []
+  );
 
   return (
     <ToastContext.Provider value={{ notify }}>

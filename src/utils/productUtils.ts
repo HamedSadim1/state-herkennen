@@ -77,11 +77,15 @@ export const filterProducts = (
   });
 };
 
-export const saveProductsToStorage = (products: Product[]): void => {
+// Returns false when the write failed (e.g. storage quota exceeded) so the UI
+// can surface the problem instead of silently losing changes.
+export const saveProductsToStorage = (products: Product[]): boolean => {
   try {
     localStorage.setItem("products", JSON.stringify(products));
+    return true;
   } catch (error) {
     console.error("Failed to save products to localStorage:", error);
+    return false;
   }
 };
 

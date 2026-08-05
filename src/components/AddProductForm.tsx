@@ -12,6 +12,12 @@ interface AddProductFormProps {
   onCancelEdit?: () => void;
 }
 
+interface FieldErrors {
+  name?: string;
+  price?: string;
+  quantity?: string;
+}
+
 const AddProductForm: React.FC<AddProductFormProps> = ({
   onAddProduct,
   editingProduct,
@@ -30,16 +36,22 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
   const [category, setCategory] = useState<Category>(
     editingProduct?.category ?? "Smartphone"
   );
-  const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { notify } = useToast();
+
+  const clearFieldError = useCallback((field: keyof FieldErrors) => {
+    setFieldErrors((prev) =>
+      prev[field] ? { ...prev, [field]: undefined } : prev
+    );
+  }, []);
 
   const resetForm = useCallback(() => {
     setProductName("");
     setPrice("");
     setQuantity("");
     setCategory("Smartphone");
-    setError(null);
+    setFieldErrors({});
   }, []);
 
   const handleSubmit = useCallback(
@@ -52,18 +64,21 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
       const parsedPrice = parseFloat(price);
       const parsedQuantity = parseInt(quantity, 10);
 
+      const errors: FieldErrors = {};
       if (!trimmedName) {
-        setError("Product name is required.");
-        return;
+        errors.name = "Product name is required.";
       }
       if (Number.isNaN(parsedPrice) || parsedPrice < 0) {
-        setError("Enter a valid price of 0 or more.");
-        return;
+        errors.price = "Enter a valid price of 0 or more.";
       }
       if (Number.isNaN(parsedQuantity) || parsedQuantity < 0) {
-        setError("Enter a valid quantity of 0 or more.");
+        errors.quantity = "Enter a valid quantity of 0 or more.";
+      }
+      if (Object.keys(errors).length > 0) {
+        setFieldErrors(errors);
         return;
       }
+      setFieldErrors({});
 
       const productData: Product = {
         id: editingProduct?.id || generateId(),
@@ -114,7 +129,9 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
       <h2 className="text-2xl font-bold text-gray-900 mb-6">
         {editingProduct ? "Edit Product" : "Add New Product"}
       </h2>
-      <form onSubmit={handleSubmit} className="space-y-4">
+      {/* noValidate: custom validation below drives the UX (red rings + per-field
+          messages) instead of being shadowed by native browser tooltips. */}
+      <form onSubmit={handleSubmit} noValidate className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="md:col-span-3">
             <label htmlFor="productName" className="field-label">
@@ -124,11 +141,23 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
               type="text"
               id="productName"
               value={productName}
-              onChange={(e) => setProductName(e.target.value)}
+              onChange={(e) => {
+                setProductName(e.target.value);
+                clearFieldError("name");
+              }}
               placeholder="Enter product name"
-              className="input"
+              className={`input ${fieldErrors.name ? "input-error" : ""}`}
+              aria-invalid={fieldErrors.name ? true : undefined}
+              aria-describedby={
+                fieldErrors.name ? "productName-error" : undefined
+              }
               required
             />
+            {fieldErrors.name && (
+              <p id="productName-error" className="field-error" role="alert">
+                {fieldErrors.name}
+              </p>
+            )}
           </div>
 
           <div>
@@ -157,13 +186,23 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
               type="number"
               id="price"
               value={price}
-              onChange={(e) => setPrice(e.target.value)}
+              onChange={(e) => {
+                setPrice(e.target.value);
+                clearFieldError("price");
+              }}
               placeholder="0.00"
               min="0"
               step="0.01"
-              className="input"
+              className={`input ${fieldErrors.price ? "input-error" : ""}`}
+              aria-invalid={fieldErrors.price ? true : undefined}
+              aria-describedby={fieldErrors.price ? "price-error" : undefined}
               required
             />
+            {fieldErrors.price && (
+              <p id="price-error" className="field-error" role="alert">
+                {fieldErrors.price}
+              </p>
+            )}
           </div>
 
           <div>
@@ -174,21 +213,27 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
               type="number"
               id="quantity"
               value={quantity}
-              onChange={(e) => setQuantity(e.target.value)}
+              onChange={(e) => {
+                setQuantity(e.target.value);
+                clearFieldError("quantity");
+              }}
               placeholder="0"
               min="0"
               step="1"
-              className="input"
+              className={`input ${fieldErrors.quantity ? "input-error" : ""}`}
+              aria-invalid={fieldErrors.quantity ? true : undefined}
+              aria-describedby={
+                fieldErrors.quantity ? "quantity-error" : undefined
+              }
               required
             />
+            {fieldErrors.quantity && (
+              <p id="quantity-error" className="field-error" role="alert">
+                {fieldErrors.quantity}
+              </p>
+            )}
           </div>
         </div>
-
-        {error && (
-          <p className="alert-error" role="alert">
-            {error}
-          </p>
-        )}
 
         <div className="flex space-x-3">
           <button

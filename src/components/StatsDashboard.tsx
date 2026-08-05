@@ -10,8 +10,15 @@ import {
   BanknotesIcon,
 } from "./icons";
 
+export type StockFilterType = "all" | "inStock" | "lowStock" | "outOfStock";
+
 interface StatsDashboardProps {
   products: Product[];
+  /** Which stock filter is currently active in the filter panel. */
+  activeStockFilter: StockFilterType;
+  /** True when any filter (search, category or stock) is active. */
+  hasAnyFilter: boolean;
+  onFilterByStock: (type: StockFilterType) => void;
 }
 
 interface StatCardProps {
@@ -21,6 +28,9 @@ interface StatCardProps {
   accent: string;
   iconBg: string;
   alignEnd?: boolean;
+  onClick?: () => void;
+  active?: boolean;
+  activeRing?: string;
   className?: string;
 }
 
@@ -31,14 +41,13 @@ const StatCard: React.FC<StatCardProps> = ({
   accent,
   iconBg,
   alignEnd = false,
+  onClick,
+  active = false,
+  activeRing = "",
   className = "",
 }) => {
-  return (
-    <div
-      className={`bg-white rounded-2xl shadow-sm border border-gray-100 p-5 flex items-center gap-4 transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 ${className} ${
-        alignEnd ? "sm:justify-between" : ""
-      }`}
-    >
+  const content = (
+    <>
       <div
         className={`w-12 h-12 rounded-xl flex items-center justify-center ${iconBg}`}
         aria-hidden="true"
@@ -53,11 +62,37 @@ const StatCard: React.FC<StatCardProps> = ({
           {value}
         </p>
       </div>
-    </div>
+    </>
   );
+
+  const baseClass = `bg-white rounded-2xl shadow-sm border border-gray-100 p-5 flex items-center gap-4 transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 ${className} ${
+    alignEnd ? "sm:justify-between" : ""
+  }`;
+
+  if (onClick) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        aria-pressed={active}
+        className={`${baseClass} w-full text-left cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${
+          active ? `ring-2 ring-offset-2 ${activeRing}` : ""
+        }`}
+      >
+        {content}
+      </button>
+    );
+  }
+
+  return <div className={baseClass}>{content}</div>;
 };
 
-const StatsDashboard: React.FC<StatsDashboardProps> = ({ products }) => {
+const StatsDashboard: React.FC<StatsDashboardProps> = ({
+  products,
+  activeStockFilter,
+  hasAnyFilter,
+  onFilterByStock,
+}) => {
   const totalValue = products.reduce(
     (sum, product) => sum + product.price * product.quantity,
     0
@@ -83,6 +118,9 @@ const StatsDashboard: React.FC<StatsDashboardProps> = ({ products }) => {
         icon={<CubeIcon className="w-6 h-6 text-blue-600" />}
         accent="text-gray-900"
         iconBg="bg-blue-100"
+        onClick={() => onFilterByStock("all")}
+        active={activeStockFilter === "all" && !hasAnyFilter}
+        activeRing="ring-blue-200"
       />
       <StatCard
         label="In Stock"
@@ -90,6 +128,9 @@ const StatsDashboard: React.FC<StatsDashboardProps> = ({ products }) => {
         icon={<CheckCircleIcon className="w-6 h-6 text-emerald-600" />}
         accent="text-emerald-600"
         iconBg="bg-emerald-100"
+        onClick={() => onFilterByStock("inStock")}
+        active={activeStockFilter === "inStock"}
+        activeRing="ring-emerald-200"
       />
       <StatCard
         label="Low Stock"
@@ -97,6 +138,9 @@ const StatsDashboard: React.FC<StatsDashboardProps> = ({ products }) => {
         icon={<ExclamationTriangleIcon className="w-6 h-6 text-amber-600" />}
         accent="text-amber-700"
         iconBg="bg-amber-100"
+        onClick={() => onFilterByStock("lowStock")}
+        active={activeStockFilter === "lowStock"}
+        activeRing="ring-amber-200"
       />
       <StatCard
         label="Out of Stock"
@@ -104,6 +148,9 @@ const StatsDashboard: React.FC<StatsDashboardProps> = ({ products }) => {
         icon={<XCircleIcon className="w-6 h-6 text-red-600" />}
         accent="text-red-600"
         iconBg="bg-red-100"
+        onClick={() => onFilterByStock("outOfStock")}
+        active={activeStockFilter === "outOfStock"}
+        activeRing="ring-red-200"
       />
       {/* Span the full grid width at sm+ so the 5th card becomes a
           summary banner instead of leaving empty grid cells. */}
