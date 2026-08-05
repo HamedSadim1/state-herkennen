@@ -1,4 +1,11 @@
-import React, { useState, useCallback, useEffect, useRef } from "react";
+import React, {
+  useState,
+  useCallback,
+  useEffect,
+  useRef,
+  useMemo,
+  useDeferredValue,
+} from "react";
 import { Product, SortConfig, FilterConfig } from "../types/product";
 import AddProductForm from "./AddProductForm";
 import ProductTable from "./ProductTable";
@@ -198,9 +205,41 @@ const Table: React.FC<TableProps> = ({ products: initialProducts }) => {
     filterConfig.showLowStockOnly ||
     filterConfig.showOutOfStockOnly;
 
-  // Apply filtering and sorting
-  const filteredProducts = filterProducts(productList, filterConfig);
-  const sortedAndFilteredProducts = sortProducts(filteredProducts, sortConfig);
+  // The list reflects the deferred search term: the input stays responsive
+  // while filtering/sorting work is deferred until typing settles. The config
+  // memo depends on the *deferred* term plus the individual non-search fields
+  // (not the whole filterConfig object), so urgent keystroke renders keep the
+  // previous identity and skip the filter work entirely.
+  const deferredSearchTerm = useDeferredValue(filterConfig.searchTerm);
+  const { category, showInStockOnly, showLowStockOnly, showOutOfStockOnly } =
+    filterConfig;
+  const deferredFilterConfig = useMemo(
+    () => ({
+      searchTerm: deferredSearchTerm,
+      category,
+      showInStockOnly,
+      showLowStockOnly,
+      showOutOfStockOnly,
+    }),
+    [
+      deferredSearchTerm,
+      category,
+      showInStockOnly,
+      showLowStockOnly,
+      showOutOfStockOnly,
+    ]
+  );
+
+  // Memoized filtering and sorting — re-computed only when their inputs change
+  // instead of on every render (e.g. typing in the search field).
+  const filteredProducts = useMemo(
+    () => filterProducts(productList, deferredFilterConfig),
+    [productList, deferredFilterConfig]
+  );
+  const sortedAndFilteredProducts = useMemo(
+    () => sortProducts(filteredProducts, sortConfig),
+    [filteredProducts, sortConfig]
+  );
 
   return (
     <div className="space-y-6">

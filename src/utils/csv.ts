@@ -3,6 +3,10 @@ import { generateId } from "./formatters";
 
 const CSV_HEADERS = ["id", "name", "category", "price", "quantity"] as const;
 
+// Parsing runs synchronously on the main thread, so cap the row count to keep
+// the UI responsive (and the resulting DOM renderable) on very large files.
+const MAX_CSV_ROWS = 10000;
+
 const escapeCsvCell = (value: string | number): string => {
   const stringValue = String(value);
   if (/[",\n]/.test(stringValue)) {
@@ -84,6 +88,12 @@ export const parseCsvToProducts = (csvText: string): ParseCsvResult => {
   const firstCell = parseCsvRow(lines[0])[0]?.toLowerCase().trim() ?? "";
   const dataLines =
     firstCell === "id" || firstCell === "name" ? lines.slice(1) : lines;
+
+  if (dataLines.length > MAX_CSV_ROWS) {
+    throw new Error(
+      `The CSV contains ${dataLines.length} rows — the import limit is ${MAX_CSV_ROWS}. Split the file into smaller parts and import them one at a time.`
+    );
+  }
 
   const warnings: string[] = [];
   const validCategories: Category[] = [

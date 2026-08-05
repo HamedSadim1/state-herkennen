@@ -66,7 +66,7 @@ const ToastCard: React.FC<{
 
   return (
     <div
-      role="status"
+      role={toast.type === "error" ? "alert" : "status"}
       className={`pointer-events-auto flex items-start gap-3 rounded-xl border border-gray-100 border-l-4 bg-white p-4 shadow-lg shadow-gray-200/60 ${
         style.accent
       } ${exiting ? "animate-toast-out" : "animate-toast-in"}`}
@@ -91,7 +91,7 @@ const ToastCard: React.FC<{
         type="button"
         onClick={() => setExiting(true)}
         aria-label="Dismiss notification"
-        className="btn btn-xs btn-ghost px-1.5 py-1 rounded-lg text-gray-400 hover:text-gray-600"
+        className="btn btn-xs btn-ghost h-8 w-8 shrink-0 rounded-lg text-gray-500 hover:text-gray-700"
       >
         <XMarkIcon className="w-4 h-4" />
       </button>

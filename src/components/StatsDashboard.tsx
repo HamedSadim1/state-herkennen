@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { Product } from "../types/product";
 import { getStockStatus } from "../utils/productUtils";
 import { formatPrice } from "../utils/formatters";
@@ -93,25 +93,29 @@ const StatsDashboard: React.FC<StatsDashboardProps> = ({
   hasAnyFilter,
   onFilterByStock,
 }) => {
-  const totalValue = products.reduce(
-    (sum, product) => sum + product.price * product.quantity,
-    0
-  );
-
-  const inStockCount = products.filter(
-    (product) => getStockStatus(product.quantity) === "inStock"
-  ).length;
-
-  const lowStockCount = products.filter(
-    (product) => getStockStatus(product.quantity) === "lowStock"
-  ).length;
-
-  const outOfStockCount = products.filter(
-    (product) => getStockStatus(product.quantity) === "outOfStock"
-  ).length;
+  // Single pass over the products computes the inventory value and all three
+  // stock counts together; memoized so it only re-runs when the list changes.
+  const { totalValue, inStockCount, lowStockCount, outOfStockCount } =
+    useMemo(() => {
+      let totalValue = 0;
+      let inStockCount = 0;
+      let lowStockCount = 0;
+      let outOfStockCount = 0;
+      for (const product of products) {
+        totalValue += product.price * product.quantity;
+        const status = getStockStatus(product.quantity);
+        if (status === "inStock") inStockCount += 1;
+        else if (status === "lowStock") lowStockCount += 1;
+        else outOfStockCount += 1;
+      }
+      return { totalValue, inStockCount, lowStockCount, outOfStockCount };
+    }, [products]);
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Visually hidden heading so the dashboard appears in the heading
+          outline (h2) alongside the other page sections. */}
+      <h2 className="sr-only">Overview</h2>
       <StatCard
         label="Total Products"
         value={String(products.length)}

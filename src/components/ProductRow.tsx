@@ -101,4 +101,7 @@ const ProductRow: React.FC<ProductRowProps> = ({
   );
 };
 
-export default ProductRow;
+// Memoized: rows only re-render when their own props change, so typing in the
+// search box (which rebuilds the filtered array with the same product objects)
+// no longer re-renders every row.
+export default React.memo(ProductRow);

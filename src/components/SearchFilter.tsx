@@ -87,7 +87,7 @@ const SearchFilter: React.FC<SearchFilterProps> = ({
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
       <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-        <h3 className="text-lg font-bold text-gray-900">Search & Filter</h3>
+        <h2 className="text-lg font-bold text-gray-900">Search & Filter</h2>
         {hasActiveFilters && (
           <div className="flex items-center gap-2">
             <span className="chip chip-blue">

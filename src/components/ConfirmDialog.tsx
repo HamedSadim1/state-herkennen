@@ -182,7 +182,10 @@ export const ConfirmProvider: React.FC<{ children: React.ReactNode }> = ({
 
   return (
     <ConfirmContext.Provider value={confirm}>
-      {children}
+      {/* inert while the dialog is open: the page behind the overlay is removed
+          from tab order and the accessibility tree, so keyboard and screen-reader
+          users can't reach it (the dialog itself sits outside this wrapper). */}
+      <div inert={options !== null}>{children}</div>
       <ConfirmDialog
         options={options}
         onConfirm={handleConfirm}
